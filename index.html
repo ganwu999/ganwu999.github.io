@@ -17,7 +17,7 @@
         body.blood-mode {background: #4b0000;}
         body.blood-mode .snow-flake {background: #ff0000; filter: blur(0);}
 
-        /* 横屏提示层 */
+        /* 手机横屏提示（循环动画） */
         .landscape-tip {
             position: fixed;
             top: 0;
@@ -30,9 +30,25 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            opacity: 1;
+            pointer-events: all;
+            transition: opacity 0.5s linear;
         }
-        .tip-icon {font-size: 12vw; color: #ff0000; text-shadow: 0 0 15px #ff0000; margin-bottom: 20px;}
-        .tip-text {color: #fff; font-size: 4vw; font-weight: 900; text-align: center;}
+        .tip-icon {
+            font-size: 15vw;
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000;
+            margin-bottom: 20px;
+            animation: rotateTip 2s linear infinite;
+        }
+        .tip-text {
+            color: #fff;
+            font-size: 4vw;
+            font-weight: 900;
+            text-align: center;
+            text-shadow: 0 0 10px #ff0000;
+            animation: flashTip 1s ease-in-out infinite alternate;
+        }
 
         /* 开场动画 */
         .intro-anime {
@@ -143,7 +159,7 @@
             animation: snowFall linear infinite;
         }
 
-        /* 弹窗 */
+        /* 弹窗（极速出现，无延迟） */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -153,7 +169,6 @@
             height: 100vh;
             background: rgba(0,0,0,0.98);
             z-index: 997;
-            animation: popupFadeIn 0.3s linear forwards;
         }
         .popup-img {
             width: 100%;
@@ -171,7 +186,7 @@
             z-index: 998;
         }
 
-        /* 杂乱祝福文字（全屏叠加、随机位置/大小/颜色） */
+        /* 杂乱祝福文字（点确定才出，频率翻倍） */
         .bless-text-container {
             position: fixed;
             top: 0;
@@ -187,7 +202,7 @@
             color: #fff;
             font-size: clamp(16px, 3vw, 24px);
             font-weight: bold;
-            text-shadow: 0 0 5px #ff0000, 0 0 8px #ff0000;
+            text-shadow: 0 0 5px #ff0000;
             opacity: 0.8;
             animation: textFloat 3s linear infinite alternate;
         }
@@ -221,13 +236,18 @@
             0% {transform: translateY(0) rotate(0deg);}
             100% {transform: translateY(100vh) rotate(720deg);}
         }
-        @keyframes popupFadeIn {
-            0% {opacity: 0;}
-            100% {opacity: 1;}
-        }
         @keyframes textFloat {
             0% {transform: translate(0, 0) rotate(0deg);}
             100% {transform: translate(10px, -10px) rotate(5deg);}
+        }
+        @keyframes rotateTip {
+            0% {transform: rotate(0deg);}
+            50% {transform: rotate(90deg);}
+            100% {transform: rotate(0deg);}
+        }
+        @keyframes flashTip {
+            0% {opacity: 0.6;}
+            100% {opacity: 1;}
         }
     </style>
 </head>
@@ -261,7 +281,7 @@
     <!-- 雪花 -->
     <div class="snow" id="snow"></div>
 
-    <!-- 杂乱祝福文字容器 -->
+    <!-- 杂乱祝福文字容器（默认隐藏，点确定才显示） -->
     <div class="bless-text-container" id="blessContainer"></div>
 
     <!-- 弹窗（你的素材） -->
@@ -273,8 +293,8 @@
     <!-- 强制停止按钮 -->
     <button class="force-stop-btn" id="forceStopBtn">强制停止</button>
 
-    <!-- 你的音频（仅弹窗时播放） -->
-    <audio id="music" src="https://image2url.com/r2/default/audio/1769329498055-4ff528d0-945a-40c5-8c09-4144582e7d91.mp3" preload="none">
+    <!-- 音频（预加载优化，零延迟播放） -->
+    <audio id="music" src="https://image2url.com/r2/default/audio/1769329498055-4ff528d0-945a-40c5-8c09-4144582e7d91.mp3" preload="auto">
 
     <script>
         // 获取所有元素
@@ -291,26 +311,42 @@
         const blessContainer = document.getElementById('blessContainer');
         const forceStopBtn = document.getElementById('forceStopBtn');
         let hasFloatPermission = false;
-        let textInterval = null; // 存储文字生成定时器，方便后续清除
+        let textInterval = null;
+        let orientationWatchId = null;
 
-        // 祝福文字库（可自行添加/修改）
+        // 祝福文字库
         const blessTexts = [
             "祝你暴富暴美！", "好运连连不断！", "万事顺遂无忧！", "平安喜乐常伴！",
             "升职加薪暴富！", "健康快乐每一天！", "心想事成如愿！", "财运亨通大吉！",
             "福气满满爆棚！", "笑口常开好运来！", "事事顺心如意！", "锦鲤附体中大奖！"
         ];
 
-        // 1. 解决卡旋转界面：电脑端直接隐藏，手机端3秒后隐藏
+        // 1. 设备检测与横屏提示
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
-            setTimeout(() => {
-                landscapeTip.style.display = 'none';
-            }, 3000);
+            if (window.DeviceOrientationEvent) {
+                orientationWatchId = window.addEventListener('deviceorientation', handleOrientation);
+            } else {
+                setTimeout(hideLandscapeTip, 3000);
+            }
         } else {
-            landscapeTip.style.display = 'none';
+            hideLandscapeTip();
         }
 
-        // 2. 雪花全屏生成（稳定不卡顿）
+        function handleOrientation() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            if (isLandscape) {
+                hideLandscapeTip();
+                window.removeEventListener('deviceorientation', handleOrientation, false);
+            }
+        }
+
+        function hideLandscapeTip() {
+            landscapeTip.style.opacity = 0;
+            setTimeout(() => landscapeTip.style.display = 'none', 500);
+        }
+
+        // 2. 雪花生成
         const createSnow = () => {
             snow.innerHTML = '';
             const snowCount = 150;
@@ -320,90 +356,97 @@
                 const size = Math.random() * 5 + 1;
                 const speed = Math.random() * 15 + 10;
                 const left = Math.random() * 100;
-                flake.style.cssText = `
-                    width: ${size}px;
-                    height: ${size}px;
-                    left: ${left}vw;
-                    animation-duration: ${speed}s;
-                `;
+                flake.style.cssText = `width: ${size}px; height: ${size}px; left: ${left}vw; animation-duration: ${speed}s`;
                 snow.appendChild(flake);
             }
         };
-        createSnow(); // 页面加载就生成雪花
+        createSnow();
 
-        // 3. 生成杂乱叠加的祝福文字
+        // 3. 祝福文字生成（频率翻倍：每0.15秒一个，全屏快速叠加）
         const createRandomBlessText = () => {
             const text = document.createElement('div');
             text.className = 'bless-text';
-            // 随机选祝福文字
             text.textContent = blessTexts[Math.floor(Math.random() * blessTexts.length)];
-            // 随机位置（全屏分布）
             text.style.left = `${Math.random() * 90}vw`;
             text.style.top = `${Math.random() * 90}vh`;
-            // 随机颜色（红/粉/黄/绿，贴合祝福氛围）
             const colors = ['#ff0000', '#ff69b4', '#ffff00', '#00ff00', '#ff4500'];
             text.style.color = colors[Math.floor(Math.random() * colors.length)];
-            // 随机旋转角度
             text.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
-            // 随机字体大小
             text.style.fontSize = `${Math.random() * 16 + 14}px`;
             blessContainer.appendChild(text);
         };
 
-        // 4. 悬浮窗权限申请（简化逻辑）
+        // 4. 悬浮窗权限申请
         const requestFloatPermission = () => {
             hasFloatPermission = confirm('是否允许开启悬浮窗权限？开启后显示强制停止按钮');
-            if (hasFloatPermission) {
-                forceStopBtn.style.display = 'block';
-            }
+            if (hasFloatPermission) forceStopBtn.style.display = 'block';
         };
 
         // 5. 强制关闭功能
         const closePageAndBrowser = () => {
-            try {
-                window.close();
-                window.location.href = 'about:blank';
-            } catch (e) {
-                window.location.reload();
-                window.close();
-            }
+            try {window.close(); window.location.href = 'about:blank';}
+            catch (e) {window.location.reload(); window.close();}
         };
         forceStopBtn.addEventListener('click', closePageAndBrowser);
 
-        // 6. 点击观看：申请权限+切血红模式+开始生成祝福文字
+        // 6. 点击观看：仅显示选择框，不生成文字
         watchBtn.addEventListener('click', () => {
             requestFloatPermission();
             watchBtn.style.display = 'none';
             document.body.classList.add('blood-mode');
             selectBox.style.display = 'flex';
-            // 开始生成杂乱祝福文字（每0.3秒生成一个，全屏叠加）
-            textInterval = setInterval(createRandomBlessText, 300);
-            blessContainer.style.display = 'block';
         });
 
-        // 7. 点击退出：恢复原样（清除文字和定时器）
+        // 7. 点击退出：恢复初始状态
         exitBtn.addEventListener('click', () => {
             selectBox.style.display = 'none';
             document.body.classList.remove('blood-mode');
             watchBtn.style.display = 'block';
             blessContainer.style.display = 'none';
-            blessContainer.innerHTML = ''; // 清空祝福文字
-            clearInterval(textInterval); // 停止生成文字
+            blessContainer.innerHTML = '';
+            clearInterval(textInterval);
             forceStopBtn.style.display = 'none';
             hasFloatPermission = false;
         });
 
-        // 8. 点击确定：5秒倒计时后弹窗（期间持续生成祝福文字）
+        // 8. 🔥 点击确定：立即显示祝福文字（高频）+ 5秒后同步触发弹窗+音频
         confirmBtn.addEventListener('click', () => {
             selectBox.style.display = 'none';
-            const countdownTime = 5; // 5秒弹窗倒计时
-            let timeLeft = countdownTime;
+            // 立即开启高频祝福文字（每0.15秒一个，比之前快一倍）
+            blessContainer.style.display = 'block';
+            textInterval = setInterval(createRandomBlessText, 150);
 
-            // 5秒后弹窗
+            // 5秒后零延迟同步触发
             setTimeout(() => {
+                // 弹窗立即显示（移除渐变动画，瞬间出现）
                 popup.style.display = 'block';
-                // 播放音频（仅弹窗时播放）
+                // 音频立即播放（预加载优化，无延迟）
                 music.currentTime = 0;
                 music.play().catch(err => console.log('音频播放失败：', err));
-                // 停止生成祝福文字
+                // 停止生成文字
                 clearInterval(textInterval);
+            }, 5000);
+        });
+
+        // 9. 点击X：彻底恢复初始状态
+        popupClose.addEventListener('click', () => {
+            popup.style.display = 'none';
+            document.body.classList.remove('blood-mode');
+            watchBtn.style.display = 'block';
+            blessContainer.style.display = 'none';
+            blessContainer.innerHTML = '';
+            music.pause();
+            music.currentTime = 0;
+            createSnow();
+            forceStopBtn.style.display = 'none';
+            hasFloatPermission = false;
+            clearInterval(textInterval);
+        });
+
+        // 页面卸载清理
+        window.addEventListener('beforeunload', () => {
+            if (orientationWatchId) window.removeEventListener('deviceorientation', handleOrientation, false);
+        });
+    </script>
+</body>
+</html>

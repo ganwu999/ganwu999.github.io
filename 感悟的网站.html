@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感悟脚踩底层</title>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {overflow: hidden;}
+        .container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            text-align: center;
+        }
+        /* 关键修改：背景图全屏铺满 */
+        .bg-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* 保持图片比例，铺满且不变形 */
+            z-index: 1;
+        }
+        .title {
+            position: absolute;
+            top: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 5vw;
+            color: #fff;
+            text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000;
+            font-weight: bold;
+            z-index: 3;
+        }
+        .record {
+            position: absolute;
+            bottom: 8%;
+            right: 8%;
+            width: 20vw;
+            max-width: 200px;
+            z-index: 4;
+            animation: rotate 8s linear infinite;
+        }
+        .btn-box {
+            position: absolute;
+            top: 50%;
+            left: 3%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px 15px;
+            border-radius: 10px;
+            z-index: 3;
+        }
+        .btn {
+            display: block;
+            width: 12vw;
+            max-width: 120px;
+            margin: 15px 0;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 2px solid #fff;
+        }
+        @keyframes rotate {
+            from {transform: rotate(0deg);}
+            to {transform: rotate(360deg);}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 背景图（已设置为全屏） -->
+        <img src="https://s41.ax1x.com/2026/01/25/pZ2UVdP.webp" class="bg-img" alt="背景">
+        <!-- 中间文字 -->
+        <div class="title">感悟脚踩底层</div>
+        <!-- 旋转唱片 -->
+        <img src="https://s41.ax1x.com/2026/01/25/pZ2UZIf.jpg" class="record" alt="唱片">
+        <!-- 左侧按钮区 -->
+        <div class="btn-box">
+            <img src="https://s41.ax1x.com/2026/01/25/pZ2Umi8.webp" class="btn" alt="按钮1">
+            <img src="https://s41.ax1x.com/2026/01/25/pZ2Umi8.webp" class="btn" alt="按钮2">
+            <img src="https://s41.ax1x.com/2026/01/25/pZ2Umi8.webp" class="btn" alt="按钮3">
+        </div>
+    </div>
+</body>
+</html>

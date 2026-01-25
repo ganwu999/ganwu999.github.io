@@ -17,7 +17,7 @@
         body.blood-mode {background: #4b0000;}
         body.blood-mode .snow-flake {background: #ff0000; filter: blur(0);}
 
-        /* 横屏提示层（修复卡顿） */
+        /* 横屏提示层 */
         .landscape-tip {
             position: fixed;
             top: 0;
@@ -34,7 +34,7 @@
         .tip-icon {font-size: 12vw; color: #ff0000; text-shadow: 0 0 15px #ff0000; margin-bottom: 20px;}
         .tip-text {color: #fff; font-size: 4vw; font-weight: 900; text-align: center;}
 
-        /* 开场动画（极简不黑屏） */
+        /* 开场动画 */
         .intro-anime {
             position: fixed;
             top: 0;
@@ -87,7 +87,7 @@
             animation: titleLight 2s linear infinite;
         }
 
-        /* 按钮/倒计时 */
+        /* 按钮 */
         .watch-btn {
             position: absolute;
             top: 50%;
@@ -122,18 +122,6 @@
             background: #666;
         }
         .confirm-btn {background: #ff0000;}
-        .countdown {
-            position: absolute;
-            top: 60%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 3vw;
-            color: #ff0000;
-            text-shadow: 0 0 10px #ff0000;
-            z-index: 5;
-            display: none;
-            font-weight: bold;
-        }
 
         /* 雪花全屏飘 */
         .snow {
@@ -165,6 +153,7 @@
             height: 100vh;
             background: rgba(0,0,0,0.98);
             z-index: 997;
+            animation: popupFadeIn 0.3s linear forwards;
         }
         .popup-img {
             width: 100%;
@@ -182,26 +171,25 @@
             z-index: 998;
         }
 
-        /* 悬浮文字 */
-        .float-text-layer {
-            display: none;
+        /* 杂乱祝福文字（全屏叠加、随机位置/大小/颜色） */
+        .bless-text-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: 996;
+            z-index: 4;
             pointer-events: none;
+            display: none;
         }
-        .float-text {
+        .bless-text {
             position: absolute;
-            bottom: -50px;
-            left: 50%;
-            transform: translateX(-50%);
             color: #fff;
-            font-size: 3vw;
-            text-shadow: 0 0 10px #ff0000;
-            animation: floatUp 0.25s linear infinite;
+            font-size: clamp(16px, 3vw, 24px);
+            font-weight: bold;
+            text-shadow: 0 0 5px #ff0000, 0 0 8px #ff0000;
+            opacity: 0.8;
+            animation: textFloat 3s linear infinite alternate;
         }
 
         /* 强制停止按钮 */
@@ -220,7 +208,7 @@
             display: none;
         }
 
-        /* 核心动画（极简稳定） */
+        /* 核心动画 */
         @keyframes introHide {
             0% {opacity: 1;}
             100% {opacity: 0; z-index: -1;}
@@ -233,9 +221,13 @@
             0% {transform: translateY(0) rotate(0deg);}
             100% {transform: translateY(100vh) rotate(720deg);}
         }
-        @keyframes floatUp {
-            0% {bottom: -50px; opacity: 1;}
-            100% {bottom: 100vh; opacity: 0;}
+        @keyframes popupFadeIn {
+            0% {opacity: 0;}
+            100% {opacity: 1;}
+        }
+        @keyframes textFloat {
+            0% {transform: translate(0, 0) rotate(0deg);}
+            100% {transform: translate(10px, -10px) rotate(5deg);}
         }
     </style>
 </head>
@@ -264,11 +256,13 @@
             <button class="select-btn exit-btn" id="exitBtn">退出</button>
             <button class="select-btn confirm-btn" id="confirmBtn">确定</button>
         </div>
-        <div class="countdown" id="countdown">小心：3秒</div>
     </div>
 
     <!-- 雪花 -->
     <div class="snow" id="snow"></div>
+
+    <!-- 杂乱祝福文字容器 -->
+    <div class="bless-text-container" id="blessContainer"></div>
 
     <!-- 弹窗（你的素材） -->
     <div class="popup-overlay" id="popup">
@@ -276,16 +270,11 @@
         <div class="popup-close" id="popupClose">X</div>
     </div>
 
-    <!-- 悬浮文字 -->
-    <div class="float-text-layer" id="floatTextLayer">
-        <div class="float-text">别慌，等3秒，可退出</div>
-    </div>
-
     <!-- 强制停止按钮 -->
     <button class="force-stop-btn" id="forceStopBtn">强制停止</button>
 
-    <!-- 你的音频 -->
-    <audio id="music" src="https://image2url.com/r2/default/audio/1769329498055-4ff528d0-945a-40c5-8c09-4144582e7d91.mp3" preload="auto">
+    <!-- 你的音频（仅弹窗时播放） -->
+    <audio id="music" src="https://image2url.com/r2/default/audio/1769329498055-4ff528d0-945a-40c5-8c09-4144582e7d91.mp3" preload="none">
 
     <script>
         // 获取所有元素
@@ -295,14 +284,21 @@
         const selectBox = document.getElementById('selectBox');
         const exitBtn = document.getElementById('exitBtn');
         const confirmBtn = document.getElementById('confirmBtn');
-        const countdown = document.getElementById('countdown');
         const popup = document.getElementById('popup');
         const popupClose = document.getElementById('popupClose');
         const snow = document.getElementById('snow');
         const music = document.getElementById('music');
-        const floatTextLayer = document.getElementById('floatTextLayer');
+        const blessContainer = document.getElementById('blessContainer');
         const forceStopBtn = document.getElementById('forceStopBtn');
         let hasFloatPermission = false;
+        let textInterval = null; // 存储文字生成定时器，方便后续清除
+
+        // 祝福文字库（可自行添加/修改）
+        const blessTexts = [
+            "祝你暴富暴美！", "好运连连不断！", "万事顺遂无忧！", "平安喜乐常伴！",
+            "升职加薪暴富！", "健康快乐每一天！", "心想事成如愿！", "财运亨通大吉！",
+            "福气满满爆棚！", "笑口常开好运来！", "事事顺心如意！", "锦鲤附体中大奖！"
+        ];
 
         // 1. 解决卡旋转界面：电脑端直接隐藏，手机端3秒后隐藏
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -335,7 +331,26 @@
         };
         createSnow(); // 页面加载就生成雪花
 
-        // 3. 悬浮窗权限申请（简化逻辑）
+        // 3. 生成杂乱叠加的祝福文字
+        const createRandomBlessText = () => {
+            const text = document.createElement('div');
+            text.className = 'bless-text';
+            // 随机选祝福文字
+            text.textContent = blessTexts[Math.floor(Math.random() * blessTexts.length)];
+            // 随机位置（全屏分布）
+            text.style.left = `${Math.random() * 90}vw`;
+            text.style.top = `${Math.random() * 90}vh`;
+            // 随机颜色（红/粉/黄/绿，贴合祝福氛围）
+            const colors = ['#ff0000', '#ff69b4', '#ffff00', '#00ff00', '#ff4500'];
+            text.style.color = colors[Math.floor(Math.random() * colors.length)];
+            // 随机旋转角度
+            text.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+            // 随机字体大小
+            text.style.fontSize = `${Math.random() * 16 + 14}px`;
+            blessContainer.appendChild(text);
+        };
+
+        // 4. 悬浮窗权限申请（简化逻辑）
         const requestFloatPermission = () => {
             hasFloatPermission = confirm('是否允许开启悬浮窗权限？开启后显示强制停止按钮');
             if (hasFloatPermission) {
@@ -343,7 +358,7 @@
             }
         };
 
-        // 4. 强制关闭功能
+        // 5. 强制关闭功能
         const closePageAndBrowser = () => {
             try {
                 window.close();
@@ -355,75 +370,40 @@
         };
         forceStopBtn.addEventListener('click', closePageAndBrowser);
 
-        // 5. 点击观看：申请权限+切血红模式
+        // 6. 点击观看：申请权限+切血红模式+开始生成祝福文字
         watchBtn.addEventListener('click', () => {
             requestFloatPermission();
             watchBtn.style.display = 'none';
             document.body.classList.add('blood-mode');
             selectBox.style.display = 'flex';
-            music.volume = 0.5;
-            music.play();
+            // 开始生成杂乱祝福文字（每0.3秒生成一个，全屏叠加）
+            textInterval = setInterval(createRandomBlessText, 300);
+            blessContainer.style.display = 'block';
         });
 
-        // 6. 点击退出：恢复原样
+        // 7. 点击退出：恢复原样（清除文字和定时器）
         exitBtn.addEventListener('click', () => {
             selectBox.style.display = 'none';
             document.body.classList.remove('blood-mode');
             watchBtn.style.display = 'block';
-            countdown.style.display = 'none';
-            floatTextLayer.style.display = 'none';
-            music.pause();
-            music.currentTime = 0;
-        });
-
-        // 7. 点击确定：倒计时+弹窗
-        confirmBtn.addEventListener('click', () => {
-            selectBox.style.display = 'none';
-            countdown.style.display = 'block';
-            music.volume = 1.0;
-
-            let timeLeft = 3;
-            const timer = setInterval(() => {
-                timeLeft--;
-                countdown.textContent = `小心：${timeLeft}秒`;
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    countdown.style.display = 'none';
-                    popup.style.display = 'block';
-                    if (hasFloatPermission) {
-                        floatTextLayer.style.display = 'block';
-                    }
-                    // 3秒后显示关闭X
-                    setTimeout(() => {
-                        popupClose.style.display = 'block';
-                        floatTextLayer.style.display = 'none';
-                    }, 3000);
-                }
-            }, 1000);
-        });
-
-        // 8. 点击X：彻底恢复初始状态（关键修改）
-        popupClose.addEventListener('click', () => {
-            // 隐藏弹窗和关闭按钮
-            popup.style.display = 'none';
-            popupClose.style.display = 'none';
-            // 取消血红模式
-            document.body.classList.remove('blood-mode');
-            // 显示观看按钮，隐藏其他元素
-            watchBtn.style.display = 'block';
-            selectBox.style.display = 'none';
-            countdown.style.display = 'none';
-            floatTextLayer.style.display = 'none';
-            // 音频暂停并重置
-            music.pause();
-            music.currentTime = 0;
-            // 重新生成雪花（恢复初始雪花效果）
-            createSnow();
-            // 隐藏强制停止按钮（可选：如需保留可删除这行）
+            blessContainer.style.display = 'none';
+            blessContainer.innerHTML = ''; // 清空祝福文字
+            clearInterval(textInterval); // 停止生成文字
             forceStopBtn.style.display = 'none';
-            // 重置悬浮窗权限状态
             hasFloatPermission = false;
         });
-    </script>
-</body>
-</html>
+
+        // 8. 点击确定：5秒倒计时后弹窗（期间持续生成祝福文字）
+        confirmBtn.addEventListener('click', () => {
+            selectBox.style.display = 'none';
+            const countdownTime = 5; // 5秒弹窗倒计时
+            let timeLeft = countdownTime;
+
+            // 5秒后弹窗
+            setTimeout(() => {
+                popup.style.display = 'block';
+                // 播放音频（仅弹窗时播放）
+                music.currentTime = 0;
+                music.play().catch(err => console.log('音频播放失败：', err));
+                // 停止生成祝福文字
+                clearInterval(textInterval);

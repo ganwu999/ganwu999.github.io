@@ -2,87 +2,428 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="screen-orientation" content="landscape">
     <title>感悟脚踩底层</title>
     <style>
         * {margin: 0; padding: 0; box-sizing: border-box;}
-        body {overflow: hidden;}
-        .container {
+        html, body {
+            overflow: hidden;
             width: 100vw;
             height: 100vh;
-            position: relative;
-            text-align: center;
+            background: #000;
         }
-        /* 关键修改：背景图全屏铺满 */
-        .bg-img {
-            position: absolute;
+        /* 血红模式 */
+        body.blood-mode {background: #4b0000;}
+        body.blood-mode .snow-flake {background: #ff0000; filter: blur(0);}
+
+        /* 横屏提示层（修复卡顿） */
+        .landscape-tip {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            object-fit: cover; /* 保持图片比例，铺满且不变形 */
+            background: #000;
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .tip-icon {font-size: 12vw; color: #ff0000; text-shadow: 0 0 15px #ff0000; margin-bottom: 20px;}
+        .tip-text {color: #fff; font-size: 4vw; font-weight: 900; text-align: center;}
+
+        /* 开场动画（极简不黑屏） */
+        .intro-anime {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 998;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: introHide 1.5s linear forwards;
+        }
+        .intro-text {
+            font-size: 10vw;
+            font-weight: 900;
+            color: #00f0ff;
+            text-shadow: 0 0 10px #00f0ff, 0 0 20px #00aaff;
+        }
+
+        /* 4K背景图 */
+        .bg-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             z-index: 1;
         }
+        .bg-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 流光标题 */
         .title {
             position: absolute;
             top: 8%;
             left: 50%;
             transform: translateX(-50%);
             font-size: 5vw;
-            color: #fff;
-            text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000;
-            font-weight: bold;
+            font-weight: 900;
             z-index: 3;
+            background: linear-gradient(90deg, transparent, #00f0ff, transparent);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 5px #00f0ff;
+            animation: titleLight 2s linear infinite;
         }
-        .record {
-            position: absolute;
-            bottom: 8%;
-            right: 8%;
-            width: 20vw;
-            max-width: 200px;
-            z-index: 4;
-            animation: rotate 8s linear infinite;
-        }
-        .btn-box {
+
+        /* 按钮/倒计时 */
+        .watch-btn {
             position: absolute;
             top: 50%;
-            left: 3%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.8);
-            padding: 20px 15px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #ff0000;
+            color: #fff;
+            border: none;
             border-radius: 10px;
-            z-index: 3;
-        }
-        .btn {
-            display: block;
-            width: 12vw;
-            max-width: 120px;
-            margin: 15px 0;
             cursor: pointer;
-            border-radius: 8px;
-            border: 2px solid #fff;
+            z-index: 5;
+            box-shadow: 0 0 20px #ff0000;
         }
-        @keyframes rotate {
-            from {transform: rotate(0deg);}
-            to {transform: rotate(360deg);}
+        .select-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 6;
+            display: none;
+            gap: 40px;
+        }
+        .select-btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #666;
+        }
+        .confirm-btn {background: #ff0000;}
+        .countdown {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3vw;
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            z-index: 5;
+            display: none;
+            font-weight: bold;
+        }
+
+        /* 雪花全屏飘 */
+        .snow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .snow-flake {
+            position: absolute;
+            top: -10px;
+            background: #fff;
+            border-radius: 50%;
+            filter: blur(0.5px);
+            opacity: 0.8;
+            animation: snowFall linear infinite;
+        }
+
+        /* 弹窗 */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.98);
+            z-index: 997;
+        }
+        .popup-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .popup-close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            font-size: 40px;
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            cursor: pointer;
+            z-index: 998;
+        }
+
+        /* 悬浮文字 */
+        .float-text-layer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 996;
+            pointer-events: none;
+        }
+        .float-text {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 3vw;
+            text-shadow: 0 0 10px #ff0000;
+            animation: floatUp 0.25s linear infinite;
+        }
+
+        /* 强制停止按钮 */
+        .force-stop-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            color: #fff;
+            background: #ff0000;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* 核心动画（极简稳定） */
+        @keyframes introHide {
+            0% {opacity: 1;}
+            100% {opacity: 0; z-index: -1;}
+        }
+        @keyframes titleLight {
+            0% {background-position: -200% 0;}
+            100% {background-position: 200% 0;}
+        }
+        @keyframes snowFall {
+            0% {transform: translateY(0) rotate(0deg);}
+            100% {transform: translateY(100vh) rotate(720deg);}
+        }
+        @keyframes floatUp {
+            0% {bottom: -50px; opacity: 1;}
+            100% {bottom: 100vh; opacity: 0;}
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- 背景图（已设置为全屏） -->
-        <img src="https://s41.ax1x.com/2026/01/25/pZ2UVdP.webp" class="bg-img" alt="背景">
-        <!-- 中间文字 -->
-        <div class="title">感悟脚踩底层</div>
-        <!-- 旋转唱片 -->
-        <img src="https://s41.ax1x.com/2026/01/25/pZ2UZIf.jpg" class="record" alt="唱片">
-        <!-- 左侧按钮区 -->
-        <div class="btn-box">
-            <img src="https://s41.ax1x.com/2026/01/25/pZ2Umi8.webp" class="btn" alt="按钮1">
-            <img src="https://s41.ax1x.com/2026/01/25/pZ2Umi8.webp" class="btn" alt="按钮2">
-            <img src="https://s41.ax1x.com/2026/01/25/pZ2Umi8.webp" class="btn" alt="按钮3">
-        </div>
+<body id="mainBody">
+    <!-- 横屏提示层 -->
+    <div class="landscape-tip" id="landscapeTip">
+        <div class="tip-icon">📱</div>
+        <div class="tip-text">请将手机旋转至横屏</div>
     </div>
+
+    <!-- 开场动画 -->
+    <div class="intro-anime" id="introAnime">
+        <div class="intro-text">感悟</div>
+    </div>
+
+    <!-- 4K背景图（你的素材） -->
+    <div class="bg-container">
+        <img src="https://s41.ax1x.com/2026/01/25/pZ20vCV.jpg" class="bg-img" alt="4K背景">
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <div class="title">感悟脚踩底层</div>
+        <button class="watch-btn" id="watchBtn">观看</button>
+        <div class="select-box" id="selectBox">
+            <button class="select-btn exit-btn" id="exitBtn">退出</button>
+            <button class="select-btn confirm-btn" id="confirmBtn">确定</button>
+        </div>
+        <div class="countdown" id="countdown">小心：3秒</div>
+    </div>
+
+    <!-- 雪花 -->
+    <div class="snow" id="snow"></div>
+
+    <!-- 弹窗（你的素材） -->
+    <div class="popup-overlay" id="popup">
+        <img src="https://s41.ax1x.com/2026/01/25/pZ20X40.jpg" class="popup-img" alt="弹窗图片">
+        <div class="popup-close" id="popupClose">X</div>
+    </div>
+
+    <!-- 悬浮文字 -->
+    <div class="float-text-layer" id="floatTextLayer">
+        <div class="float-text">别慌，等3秒，可退出</div>
+    </div>
+
+    <!-- 强制停止按钮 -->
+    <button class="force-stop-btn" id="forceStopBtn">强制停止</button>
+
+    <!-- 你的音频 -->
+    <audio id="music" src="https://image2url.com/r2/default/audio/1769329498055-4ff528d0-945a-40c5-8c09-4144582e7d91.mp3" preload="auto">
+
+    <script>
+        // 获取所有元素
+        const landscapeTip = document.getElementById('landscapeTip');
+        const introAnime = document.getElementById('introAnime');
+        const watchBtn = document.getElementById('watchBtn');
+        const selectBox = document.getElementById('selectBox');
+        const exitBtn = document.getElementById('exitBtn');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const countdown = document.getElementById('countdown');
+        const popup = document.getElementById('popup');
+        const popupClose = document.getElementById('popupClose');
+        const snow = document.getElementById('snow');
+        const music = document.getElementById('music');
+        const floatTextLayer = document.getElementById('floatTextLayer');
+        const forceStopBtn = document.getElementById('forceStopBtn');
+        let hasFloatPermission = false;
+
+        // 1. 解决卡旋转界面：电脑端直接隐藏，手机端3秒后隐藏
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            setTimeout(() => {
+                landscapeTip.style.display = 'none';
+            }, 3000);
+        } else {
+            landscapeTip.style.display = 'none';
+        }
+
+        // 2. 雪花全屏生成（稳定不卡顿）
+        const createSnow = () => {
+            snow.innerHTML = '';
+            const snowCount = 150;
+            for (let i = 0; i < snowCount; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snow-flake';
+                const size = Math.random() * 5 + 1;
+                const speed = Math.random() * 15 + 10;
+                const left = Math.random() * 100;
+                flake.style.cssText = `
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${left}vw;
+                    animation-duration: ${speed}s;
+                `;
+                snow.appendChild(flake);
+            }
+        };
+        createSnow(); // 页面加载就生成雪花
+
+        // 3. 悬浮窗权限申请（简化逻辑）
+        const requestFloatPermission = () => {
+            hasFloatPermission = confirm('是否允许开启悬浮窗权限？开启后显示强制停止按钮');
+            if (hasFloatPermission) {
+                forceStopBtn.style.display = 'block';
+            }
+        };
+
+        // 4. 强制关闭功能
+        const closePageAndBrowser = () => {
+            try {
+                window.close();
+                window.location.href = 'about:blank';
+            } catch (e) {
+                window.location.reload();
+                window.close();
+            }
+        };
+        forceStopBtn.addEventListener('click', closePageAndBrowser);
+
+        // 5. 点击观看：申请权限+切血红模式
+        watchBtn.addEventListener('click', () => {
+            requestFloatPermission();
+            watchBtn.style.display = 'none';
+            document.body.classList.add('blood-mode');
+            selectBox.style.display = 'flex';
+            music.volume = 0.5;
+            music.play();
+        });
+
+        // 6. 点击退出：恢复原样
+        exitBtn.addEventListener('click', () => {
+            selectBox.style.display = 'none';
+            document.body.classList.remove('blood-mode');
+            watchBtn.style.display = 'block';
+            countdown.style.display = 'none';
+            floatTextLayer.style.display = 'none';
+            music.pause();
+            music.currentTime = 0;
+        });
+
+        // 7. 点击确定：倒计时+弹窗
+        confirmBtn.addEventListener('click', () => {
+            selectBox.style.display = 'none';
+            countdown.style.display = 'block';
+            music.volume = 1.0;
+
+            let timeLeft = 3;
+            const timer = setInterval(() => {
+                timeLeft--;
+                countdown.textContent = `小心：${timeLeft}秒`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    countdown.style.display = 'none';
+                    popup.style.display = 'block';
+                    if (hasFloatPermission) {
+                        floatTextLayer.style.display = 'block';
+                    }
+                    // 3秒后显示关闭X
+                    setTimeout(() => {
+                        popupClose.style.display = 'block';
+                        floatTextLayer.style.display = 'none';
+                    }, 3000);
+                }
+            }, 1000);
+        });
+
+        // 8. 点击X：彻底恢复初始状态（关键修改）
+        popupClose.addEventListener('click', () => {
+            // 隐藏弹窗和关闭按钮
+            popup.style.display = 'none';
+            popupClose.style.display = 'none';
+            // 取消血红模式
+            document.body.classList.remove('blood-mode');
+            // 显示观看按钮，隐藏其他元素
+            watchBtn.style.display = 'block';
+            selectBox.style.display = 'none';
+            countdown.style.display = 'none';
+            floatTextLayer.style.display = 'none';
+            // 音频暂停并重置
+            music.pause();
+            music.currentTime = 0;
+            // 重新生成雪花（恢复初始雪花效果）
+            createSnow();
+            // 隐藏强制停止按钮（可选：如需保留可删除这行）
+            forceStopBtn.style.display = 'none';
+            // 重置悬浮窗权限状态
+            hasFloatPermission = false;
+        });
+    </script>
 </body>
 </html>
-

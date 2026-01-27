@@ -2,450 +2,1066 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="screen-orientation" content="landscape">
-    <title>感悟脚踩底层</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级群 - 制作人：张诺策</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * {margin: 0; padding: 0; box-sizing: border-box;}
-        html, body {
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
+        @tailwind base;
+        @tailwind components;
+        @tailwind utilities;
+        body {
+            overflow-x: hidden;
+            background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: "Microsoft YaHei", sans-serif;
+            padding-bottom: 120px; /* 为底部播放器预留空间，防止布局重叠 */
         }
-        /* 血红模式 */
-        body.blood-mode {background: #4b0000;}
-        body.blood-mode .snow-flake {background: #ff0000; filter: blur(0);}
-
-        /* 手机横屏提示（循环动画） */
-        .landscape-tip {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 999;
+        /* 验证模块 */
+        .verify-container {
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .verify-hidden {
+            opacity: 0;
+            transform: translateY(-100vh);
+            pointer-events: none;
+        }
+        /* 入场动画 */
+        @keyframes page-enter {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .page-container {
+            animation: page-enter 1.2s ease-out forwards;
+            opacity: 0;
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto; /* 居中布局，防止左右溢出 */
+        }
+        /* 板块随机淡入动画 */
+        @keyframes fade-in-from-top { 0% { opacity:0; transform:translateY(-50px); } 100% { opacity:1; transform:translateY(0); } }
+        @keyframes fade-in-from-bottom { 0% { opacity:0; transform:translateY(50px); } 100% { opacity:1; transform:translateY(0); } }
+        @keyframes fade-in-from-left { 0% { opacity:0; transform:translateX(-50px); } 100% { opacity:1; transform:translateX(0); } }
+        @keyframes fade-in-from-right { 0% { opacity:0; transform:translateX(50px); } 100% { opacity:1; transform:translateX(0); } }
+        /* 板块悬停：倾斜放大+灵动过渡 */
+        .class-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            min-height: 200px; /* 统一卡片高度，防止布局错乱 */
             display: flex;
-            justify-content: center;
-            align-items: center;
             flex-direction: column;
-            opacity: 1;
-            pointer-events: all;
-            transition: opacity 0.5s linear;
-        }
-        .tip-icon {
-            font-size: 15vw;
-            color: #ff0000;
-            text-shadow: 0 0 20px #ff0000;
-            margin-bottom: 20px;
-            animation: rotateTip 2s linear infinite;
-        }
-        .tip-text {
-            color: #fff;
-            font-size: 4vw;
-            font-weight: 900;
-            text-align: center;
-            text-shadow: 0 0 10px #ff0000;
-            animation: flashTip 1s ease-in-out infinite alternate;
-        }
-
-        /* 开场动画 */
-        .intro-anime {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 998;
-            display: flex;
-            justify-content: center;
             align-items: center;
-            animation: introHide 1.5s linear forwards;
+            justify-content: center;
         }
-        .intro-text {
-            font-size: 10vw;
-            font-weight: 900;
-            color: #00f0ff;
-            text-shadow: 0 0 10px #00f0ff, 0 0 20px #00aaff;
+        .class-card:hover {
+            transform: rotate(2deg) scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
         }
-
-        /* 4K背景图 */
-        .bg-container {
+        /* 音乐播放器 - 固定底部，布局规整 */
+        .music-player {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
+            right: 0;
+            border-top: 1px solid #eaeaea;
+            z-index: 30;
+            padding: 1rem 2rem;
+            box-sizing: border-box; /* 防止内边距溢出 */
         }
-        .bg-img {
+        .progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; cursor: pointer; width: 100%; }
+        .progress-fill { height: 100%; background: #4f46e5; border-radius: 3px; width: 0%; transition: width 0.1s linear; }
+        .volume-bar { height: 4px; background: #e0e0e0; border-radius: 2px; cursor: pointer; width: 100px; }
+        .volume-fill { height: 100%; background: #4f46e5; border-radius: 2px; width: 70%; transition: width 0.2s ease; }
+        /* 歌词弹屏：灵动效果 */
+        .lyric-popup {
+            position: fixed;
+            bottom: 120px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 40;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: lyric-fly 0.5s ease forwards, lyric-fade 3s ease 2.5s forwards;
+        }
+        @keyframes lyric-fly {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes lyric-fade {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        /* 模态框遮罩 */
+        .modal-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-container {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            padding: 24px;
+            animation: modal-enter 0.3s ease forwards;
+            box-sizing: border-box; /* 防止内边距溢出 */
+        }
+        @keyframes modal-enter {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        /* 隐藏元素 */
+        .hidden-block { display: none !important; }
+        /* 文件列表样式 */
+        .file-item {
+            transition: all 0.3s ease;
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            box-sizing: border-box;
         }
-
-        /* 流光标题 */
-        .title {
-            position: absolute;
-            top: 8%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 5vw;
-            font-weight: 900;
-            z-index: 3;
-            background: linear-gradient(90deg, transparent, #00f0ff, transparent);
-            background-size: 200% 100%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 5px #00f0ff;
-            animation: titleLight 2s linear infinite;
+        .file-item:hover {
+            background: #f8fafc;
         }
-
-        /* 按钮 */
-        .watch-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 15px 40px;
-            font-size: 24px;
-            background: #ff0000;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            z-index: 5;
-            box-shadow: 0 0 20px #ff0000;
-        }
-        .select-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 6;
-            display: none;
-            gap: 40px;
-        }
-        .select-btn {
-            padding: 15px 40px;
-            font-size: 24px;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            background: #666;
-        }
-        .confirm-btn {background: #ff0000;}
-
-        /* 雪花全屏飘 */
-        .snow {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 2;
-            pointer-events: none;
-        }
-        .snow-flake {
-            position: absolute;
-            top: -10px;
-            background: #fff;
-            border-radius: 50%;
-            filter: blur(0.5px);
-            opacity: 0.8;
-            animation: snowFall linear infinite;
-        }
-
-        /* 弹窗（极速出现，无延迟） */
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0,0,0,0.98);
-            z-index: 997;
-        }
-        .popup-img {
+        /* 表格样式规整 */
+        table {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            box-sizing: border-box;
         }
-        .popup-close {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            font-size: 40px;
-            color: #ff0000;
-            text-shadow: 0 0 10px #ff0000;
-            cursor: pointer;
-            z-index: 998;
-        }
-
-        /* 杂乱祝福文字（点确定才出，频率翻倍） */
-        .bless-text-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 4;
-            pointer-events: none;
-            display: none;
-        }
-        .bless-text {
-            position: absolute;
-            color: #fff;
-            font-size: clamp(16px, 3vw, 24px);
-            font-weight: bold;
-            text-shadow: 0 0 5px #ff0000;
-            opacity: 0.8;
-            animation: textFloat 3s linear infinite alternate;
-        }
-
-        /* 强制停止按钮 */
-        .force-stop-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            font-size: 18px;
-            color: #fff;
-            background: #ff0000;
-            border: 2px solid #fff;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 1000;
-            display: none;
-        }
-
-        /* 核心动画 */
-        @keyframes introHide {
-            0% {opacity: 1;}
-            100% {opacity: 0; z-index: -1;}
-        }
-        @keyframes titleLight {
-            0% {background-position: -200% 0;}
-            100% {background-position: 200% 0;}
-        }
-        @keyframes snowFall {
-            0% {transform: translateY(0) rotate(0deg);}
-            100% {transform: translateY(100vh) rotate(720deg);}
-        }
-        @keyframes textFloat {
-            0% {transform: translate(0, 0) rotate(0deg);}
-            100% {transform: translate(10px, -10px) rotate(5deg);}
-        }
-        @keyframes rotateTip {
-            0% {transform: rotate(0deg);}
-            50% {transform: rotate(90deg);}
-            100% {transform: rotate(0deg);}
-        }
-        @keyframes flashTip {
-            0% {opacity: 0.6;}
-            100% {opacity: 1;}
+        td, th {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
         }
     </style>
 </head>
-<body id="mainBody">
-    <!-- 横屏提示层 -->
-    <div class="landscape-tip" id="landscapeTip">
-        <div class="tip-icon">📱</div>
-        <div class="tip-text">请将手机旋转至横屏</div>
+<body>
+    <!-- 1. 制作人验证模块 -->
+    <div class="verify-container fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
+        <h2 class="text-3xl font-bold text-indigo-600 mb-8">班级群网站 - 制作人验证</h2>
+        <div class="flex items-center gap-4 w-full max-w-md px-4">
+            <input type="text" id="verifyInput" placeholder="请输入网页制作人姓名" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button id="verifyBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">验证进入</button>
+        </div>
+        <p class="text-gray-500 mt-4 text-sm">提示：输入正确的制作人姓名即可解锁网站</p>
     </div>
 
-    <!-- 开场动画 -->
-    <div class="intro-anime" id="introAnime">
-        <div class="intro-text">感悟</div>
-    </div>
+    <!-- 2. 网站主内容（验证通过后显示） -->
+    <div class="page-container min-h-screen py-10 px-4 md:px-8">
+        <!-- 顶部账号栏 -->
+        <div class="flex flex-wrap justify-between items-center mb-8 bg-white/80 backdrop-blur(5px) p-4 rounded-xl">
+            <div class="mb-4 md:mb-0">
+                <h1 class="text-2xl font-bold text-indigo-700">我们的班级群</h1>
+                <p class="text-gray-500 text-sm">制作人：张诺策 | 时光不老，我们不散</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <button id="guestLoginBtn" class="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors">游客登录</button>
+                <button id="loginBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">登录</button>
+                <button id="registerBtn" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors">注册</button>
+                <button id="logoutBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors hidden-block">退出登录</button>
+                <span id="userName" class="text-gray-800 font-medium hidden-block mt-2 md:mt-0"></span>
+            </div>
+        </div>
 
-    <!-- 4K背景图（你的素材） -->
-    <div class="bg-container">
-        <img src="https://s41.ax1x.com/2026/01/25/pZ20vCV.jpg" class="bg-img" alt="4K背景">
-    </div>
+        <!-- 开发者功能面板（仅张诺策可见） -->
+        <div id="devPanel" class="mb-8 bg-purple-50 p-4 rounded-xl hidden-block">
+            <h3 class="text-xl font-bold text-purple-700 mb-3 flex items-center"><i class="fa-solid fa-code mr-2"></i>开发者面板（张诺策专属）</h3>
+            <div class="flex flex-wrap gap-3 mb-4">
+                <button id="checkRegBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">审核注册账号</button>
+                <button id="checkFileBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">审核上传文件</button>
+                <button id="clearDataBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">重置所有数据</button>
+                <button id="backupDataBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">备份数据</button>
+                <button id="restoreDataBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">恢复数据</button>
+                <input type="file" id="restoreFileInput" accept=".json" class="hidden-block">
+            </div>
+            <p class="text-purple-600 text-sm"><i class="fa-solid fa-exclamation-circle mr-1"></i> 注：此处可审核所有注册申请和文件上传申请，审核通过后生效</p>
+        </div>
 
-    <!-- 主容器 -->
-    <div class="container">
-        <div class="title">感悟脚踩底层</div>
-        <button class="watch-btn" id="watchBtn">观看</button>
-        <div class="select-box" id="selectBox">
-            <button class="select-btn exit-btn" id="exitBtn">退出</button>
-            <button class="select-btn confirm-btn" id="confirmBtn">确定</button>
+        <!-- 班级功能板块（全可用） -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            <!-- 班级相册 -->
+            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="album">
+                <i class="fa-solid fa-images text-4xl text-indigo-600 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级相册</h3>
+                <p class="text-gray-500">记录我们的点点滴滴美好瞬间</p>
+            </div>
+            <!-- 班级公告 -->
+            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="notice">
+                <i class="fa-solid fa-bullhorn text-4xl text-indigo-600 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级公告</h3>
+                <p class="text-gray-500">及时获取班级最新通知和安排</p>
+            </div>
+            <!-- 同学通讯录 -->
+            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="contact">
+                <i class="fa-solid fa-address-book text-4xl text-indigo-600 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">同学通讯录</h3>
+                <p class="text-gray-500">珍藏每一位同学的联系方式</p>
+            </div>
+            <!-- 班级活动 -->
+            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="activity">
+                <i class="fa-solid fa-calendar-check text-4xl text-indigo-600 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级活动</h3>
+                <p class="text-gray-500">回顾过往活动，预约未来相聚</p>
+            </div>
+            <!-- 学习资料分享 -->
+            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="file">
+                <i class="fa-solid fa-book-open text-4xl text-indigo-600 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">学习资料</h3>
+                <p class="text-gray-500">互帮互助，共享优质学习资源</p>
+            </div>
+            <!-- 班级留言板 -->
+            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="message">
+                <i class="fa-solid fa-comment-dots text-4xl text-indigo-600 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级留言板</h3>
+                <p class="text-gray-500">留下想对同学说的心里话</p>
+            </div>
+        </div>
+
+        <!-- 板块内容容器（默认隐藏） -->
+        <div id="contentContainer" class="bg-white rounded-xl p-6 hidden-block mb-8">
+            <div id="albumPage" class="content-page hidden-block">
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级相册</h2>
+                <p class="text-gray-500 mb-4">点击下方上传相册图片（需登录，审核后展示）</p>
+                <button id="uploadAlbumBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors mb-4">上传相册图片</button>
+                <div id="albumList" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-gray-400 text-center py-8 col-span-full">暂无审核通过的相册图片</div>
+                </div>
+            </div>
+
+            <div id="noticePage" class="content-page hidden-block">
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级公告</h2>
+                <div class="p-4 bg-indigo-50 rounded-lg mb-4">
+                    <h3 class="font-semibold text-indigo-800">最新公告</h3>
+                    <p class="text-gray-600 mt-2">本班级群网站正式上线，支持文件分享、相册上传、留言互动等功能，所有上传内容需经制作人审核后展示~</p>
+                    <p class="text-gray-400 text-sm mt-2">发布时间：2026-01-27</p>
+                </div>
+                <p class="text-gray-500">开发者可发布新公告（专属功能）</p>
+            </div>
+
+            <div id="contactPage" class="content-page hidden-block">
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4">同学通讯录</h2>
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-indigo-50">
+                            <th class="border border-gray-200 p-2 text-left">姓名</th>
+                            <th class="border border-gray-200 p-2 text-left">手机号</th>
+                            <th class="border border-gray-200 p-2 text-left">QQ/微信</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border border-gray-200 p-2">张诺策</td>
+                            <td class="border border-gray-200 p-2">开发者专属</td>
+                            <td class="border border-gray-200 p-2">开发者专属</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="border border-gray-200 p-2">同学A</td>
+                            <td class="border border-gray-200 p-2">138****1234</td>
+                            <td class="border border-gray-200 p-2">123456789</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-gray-500 mt-4">可在留言板提交自己的联系方式，审核后添加至通讯录</p>
+            </div>
+
+            <div id="activityPage" class="content-page hidden-block">
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级活动</h2>
+                <div class="p-4 bg-gray-50 rounded-lg mb-3">
+                    <h3 class="font-semibold text-gray-800">2026年班级聚会</h3>
+                    <p class="text-gray-600 mt-1">时间：待定 | 地点：待定</p>
+                    <p class="text-gray-500 text-sm mt-1">报名方式：在留言板留言报名</p>
+                </div>
+                <p class="text-gray-500">暂无过往活动记录，期待大家的相聚~</p>
+            </div>
+
+            <div id="filePage" class="content-page hidden-block">
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4">学习资料分享</h2>
+                <p class="text-gray-500 mb-4">点击下方上传学习资料（需登录，审核后展示，支持多种格式）</p>
+                <button id="uploadFileBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors mb-4">上传学习资料</button>
+                <div id="fileList" class="space-y-3">
+                    <div class="text-gray-400 text-center py-8">暂无审核通过的学习资料</div>
+                </div>
+            </div>
+
+            <div id="messagePage" class="content-page hidden-block">
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级留言板</h2>
+                <div class="mb-4">
+                    <textarea id="messageInput" rows="3" placeholder="写下你想对同学说的话（需登录）" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                    <button id="sendMessageBtn" class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">发送留言</button>
+                </div>
+                <div id="messageList" class="space-y-3">
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between">
+                            <span class="font-medium">张诺策</span>
+                            <span class="text-gray-400 text-sm">2026-01-27</span>
+                        </div>
+                        <p class="text-gray-600 mt-1">欢迎大家使用班级群网站，有问题可以在这里留言~</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 雪花 -->
-    <div class="snow" id="snow"></div>
-
-    <!-- 杂乱祝福文字容器（默认隐藏，点确定才显示） -->
-    <div class="bless-text-container" id="blessContainer"></div>
-
-    <!-- 弹窗（你的素材） -->
-    <div class="popup-overlay" id="popup">
-        <img src="https://s41.ax1x.com/2026/01/25/pZ20X40.jpg" class="popup-img" alt="弹窗图片">
-        <div class="popup-close" id="popupClose">X</div>
+    <!-- 3. 音乐播放器（适配GitHub仓库+布局规整） -->
+    <div class="music-player">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-music text-2xl text-indigo-600"></i>
+                <div>
+                    <h4 id="currentSongTitle" class="font-semibold text-gray-800">稻香</h4>
+                    <p id="currentSongSinger" class="text-xs text-gray-500">周杰伦</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-5">
+                <button id="prevSong" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                    <i class="fa-solid fa-step-backward text-xl"></i>
+                </button>
+                <button id="playPause" class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors">
+                    <i class="fa-solid fa-play" id="playPauseIcon"></i>
+                </button>
+                <button id="nextSong" class="text-gray-700 hover:text-indigo-600 transition-colors">
+                    <i class="fa-solid fa-step-forward text-xl"></i>
+                </button>
+            </div>
+            <div class="w-full md:w-64 flex flex-col gap-1">
+                <div class="progress-bar relative" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span id="currentTime">00:00</span>
+                    <span id="totalTime">03:45</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-volume-up text-gray-700" id="volumeIcon"></i>
+                <div class="volume-bar relative" id="volumeBar">
+                    <div class="volume-fill" id="volumeFill"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 强制停止按钮 -->
-    <button class="force-stop-btn" id="forceStopBtn">强制停止</button>
+    <!-- 4. 模态框（登录/注册/审核/上传） -->
+    <div id="loginModal" class="modal-mask hidden-block">
+        <div class="modal-container">
+            <h3 class="text-xl font-bold text-indigo-700 mb-4">账号登录</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-gray-700 text-sm mb-1">用户名</label>
+                    <input type="text" id="loginName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm mb-1">密码</label>
+                    <input type="password" id="loginPwd" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button id="doLoginBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">登录</button>
+                <button id="closeLoginModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- 音频（预加载优化，零延迟播放） -->
-    <audio id="music" src="https://image2url.com/r2/default/audio/1769329498055-4ff528d0-945a-40c5-8c09-4144582e7d91.mp3" preload="auto">
+    <div id="registerModal" class="modal-mask hidden-block">
+        <div class="modal-container">
+            <h3 class="text-xl font-bold text-indigo-700 mb-4">账号注册</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-gray-700 text-sm mb-1">用户名</label>
+                    <input type="text" id="regName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm mb-1">密码</label>
+                    <input type="password" id="regPwd" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm mb-1">确认密码</label>
+                    <input type="password" id="regPwd2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <p class="text-gray-500 text-sm"><i class="fa-solid fa-info-circle mr-1"></i> 注册后需经张诺策审核通过方可登录</p>
+                <button id="doRegisterBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">提交注册</button>
+                <button id="closeRegisterModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="checkRegModal" class="modal-mask hidden-block">
+        <div class="modal-container max-h-[80vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-purple-700 mb-4">审核注册申请</h3>
+            <div id="regCheckList" class="space-y-3 mb-4">
+                <div class="text-gray-400">暂无待审核的注册申请</div>
+            </div>
+            <button id="closeCheckRegModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">关闭</button>
+        </div>
+    </div>
+
+    <div id="checkFileModal" class="modal-mask hidden-block">
+        <div class="modal-container max-h-[80vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-purple-700 mb-4">审核文件上传申请</h3>
+            <div id="fileCheckList" class="space-y-3 mb-4">
+                <div class="text-gray-400">暂无待审核的文件上传申请</div>
+            </div>
+            <button id="closeCheckFileModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">关闭</button>
+        </div>
+    </div>
+
+    <div id="uploadFileModal" class="modal-mask hidden-block">
+        <div class="modal-container">
+            <h3 class="text-xl font-bold text-indigo-700 mb-4">上传文件</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-gray-700 text-sm mb-1">文件名称</label>
+                    <input type="text" id="uploadFileName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入文件名称">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm mb-1">选择文件</label>
+                    <input type="file" id="uploadFileInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" accept="*">
+                </div>
+                <p class="text-gray-500 text-sm"><i class="fa-solid fa-info-circle mr-1"></i> 上传后需经审核通过方可展示</p>
+                <button id="doUploadFileBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">提交上传</button>
+                <button id="closeUploadFileModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // 获取所有元素
-        const landscapeTip = document.getElementById('landscapeTip');
-        const introAnime = document.getElementById('introAnime');
-        const watchBtn = document.getElementById('watchBtn');
-        const selectBox = document.getElementById('selectBox');
-        const exitBtn = document.getElementById('exitBtn');
-        const confirmBtn = document.getElementById('confirmBtn');
-        const popup = document.getElementById('popup');
-        const popupClose = document.getElementById('popupClose');
-        const snow = document.getElementById('snow');
-        const music = document.getElementById('music');
-        const blessContainer = document.getElementById('blessContainer');
-        const forceStopBtn = document.getElementById('forceStopBtn');
-        let hasFloatPermission = false;
-        let textInterval = null;
-        let orientationWatchId = null;
+        // 全局变量
+        let currentUser = { isLogin: false, name: '', isDev: false };
+        
+        // ================= 关键更新：GitHub仓库配置（修复变量命名错误） =================
+        const GITHUB_MUSIC_BASE_URL = 'https://raw.githubusercontent.com/ganwu999/ganwu999.github.io/main/music/';
+        
+        // 初始化本地存储（已更新开发者账号：张诺策 / a18533169568）
+        const initLocalStorage = () => {
+            const keys = ['classUserList', 'classRegApply', 'classFileList', 'classFileApply', 'classAlbumList', 'classMessageList'];
+            keys.forEach(key => {
+                if (!localStorage.getItem(key)) {
+                    localStorage.setItem(key, key === 'classMessageList' ? JSON.stringify([{name:'张诺策',content:'欢迎大家使用班级群网站，有问题可以在这里留言~',time:'2026-01-27'}]) : '[]');
+                }
+            });
+            // 初始化开发者账号（已更新密码为 a18533169568）
+            let userList = JSON.parse(localStorage.getItem('classUserList'));
+            if (!userList.some(item => item.name === '张诺策')) {
+                userList.push({ name: '张诺策', pwd: 'a18533169568', time: new Date().toLocaleDateString() });
+                localStorage.setItem('classUserList', JSON.stringify(userList));
+            }
+        };
+        initLocalStorage();
 
-        // 祝福文字库
-        const blessTexts = [
-            "祝你暴富暴美！", "好运连连不断！", "万事顺遂无忧！", "平安喜乐常伴！",
-            "升职加薪暴富！", "健康快乐每一天！", "心想事成如愿！", "财运亨通大吉！",
-            "福气满满爆棚！", "笑口常开好运来！", "事事顺心如意！", "锦鲤附体中大奖！"
+        // 歌曲列表（适配GitHub仓库路径，文件名与仓库中 music 文件夹内一致）
+        const songList = [
+            { 
+                title: '稻香', 
+                singer: '周杰伦', 
+                url: `${https://github.com/ganwu999/ganwu999.github.io}dao xiang.mp3`, // 对应仓库中 music/dao xiang.mp3
+                lyric: [[0,'对这个世界如果你有太多的抱怨'],[3,'跌倒了就不敢继续往前走'],[6,'为什么人要这么的脆弱 堕落'],[9,'请你打开电视看看'],[12,'多少人为生命在努力勇敢的走下去'],[15,'我们是不是该知足'],[18,'珍惜一切 就算没有拥有'],[22,'还记得你说家是唯一的城堡'],[26,'随着稻香河流继续奔跑'],[29,'微微笑 小时候的梦我知道'],[33,'不要哭让萤火虫带着你逃跑'],[36,'乡间的歌谣永远的依靠'],[40,'回家吧 回到最初的美好']] 
+            },
+            { 
+                title: '晴天', 
+                singer: '周杰伦', 
+                url: `$https://github.com/ganwu999/ganwu999.github.io}qing tian.mp3`, // 对应仓库中 music/qing tian.mp3
+                lyric: [[0,'故事的小黄花 从出生那年就飘着'],[4,'童年的荡秋千 随记忆一直晃到现在'],[8,'rui sou sou xi dou xi la'],[11,'sou la xi xi xi xi la xi la sou'],[15,'吹着前奏望着天空 我想起花瓣试着掉落']] 
+            },
+            { 
+                title: '红色高跟鞋', 
+                singer: '蔡健雅', 
+                url: `$https://github.com/ganwu999/ganwu999.github.io}hong se gao gen xie.mp3`, // 对应仓库中 music/hong se gao gen xie.mp3
+                lyric: [[0,'该怎么去形容你最贴切'],[4,'拿什么跟你作比较才算特别'],[8,'对你的感觉 强烈'],[11,'却又不太了解 只凭直觉']] 
+            }
         ];
 
-        // 1. 设备检测与横屏提示
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            if (window.DeviceOrientationEvent) {
-                orientationWatchId = window.addEventListener('deviceorientation', handleOrientation);
+        // 1. 制作人验证
+        const verifyInput = document.getElementById('verifyInput');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const verifyContainer = document.querySelector('.verify-container');
+        const pageContainer = document.querySelector('.page-container');
+        verifyBtn.addEventListener('click', () => {
+            if (verifyInput.value.trim() === '张诺策') {
+                verifyContainer.classList.add('verify-hidden');
+                setTimeout(() => {
+                    pageContainer.style.display = 'block';
+                    initCardAnimations();
+                }, 600);
             } else {
-                setTimeout(hideLandscapeTip, 3000);
+                alert('姓名输入错误，请重新输入！');
+                verifyInput.value = '';
+                verifyInput.focus();
             }
-        } else {
-            hideLandscapeTip();
+        });
+        verifyInput.addEventListener('keydown', (e) => e.key === 'Enter' && verifyBtn.click());
+
+        // 板块入场动画
+        function initCardAnimations() {
+            const cards = document.querySelectorAll('.class-card');
+            const title = document.querySelector('.page-container > div:first-child');
+            const animations = ['fade-in-from-top','fade-in-from-bottom','fade-in-from-left','fade-in-from-right'];
+            title.style.animation = `${animations[0]} 0.8s ease-out forwards`;
+            title.style.opacity = '0';
+            cards.forEach((card, index) => {
+                const randomAni = animations[Math.floor(Math.random() * 4)];
+                card.style.animation = `${randomAni} 0.8s ease-out forwards`;
+                card.style.opacity = '0';
+                card.style.animationDelay = `${index * 0.15}s`;
+            });
         }
 
-        function handleOrientation() {
-            const isLandscape = window.innerWidth > window.innerHeight;
-            if (isLandscape) {
-                hideLandscapeTip();
-                window.removeEventListener('deviceorientation', handleOrientation, false);
+        // 2. 板块功能绑定
+        const classCards = document.querySelectorAll('.class-card');
+        const contentContainer = document.getElementById('contentContainer');
+        const contentPages = document.querySelectorAll('.content-page');
+        classCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const target = card.dataset.target;
+                contentContainer.classList.remove('hidden-block');
+                contentPages.forEach(page => page.classList.add('hidden-block'));
+                document.getElementById(`${target}Page`).classList.remove('hidden-block');
+                contentContainer.scrollIntoView({ behavior: 'smooth' });
+                target === 'file' && renderFileList();
+                target === 'message' && renderMessageList();
+                target === 'album' && renderAlbumList();
+            });
+        });
+
+        // 3. 账号系统（已适配新账号密码）
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const guestLoginBtn = document.getElementById('guestLoginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userName = document.getElementById('userName');
+        const devPanel = document.getElementById('devPanel');
+        const loginModal = document.getElementById('loginModal');
+        const registerModal = document.getElementById('registerModal');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        const closeRegisterModal = document.getElementById('closeRegisterModal');
+        const doLoginBtn = document.getElementById('doLoginBtn');
+        const doRegisterBtn = document.getElementById('doRegisterBtn');
+        const loginName = document.getElementById('loginName');
+        const loginPwd = document.getElementById('loginPwd');
+        const regName = document.getElementById('regName');
+        const regPwd = document.getElementById('regPwd');
+        const regPwd2 = document.getElementById('regPwd2');
+
+        const openModal = (modal) => modal.classList.remove('hidden-block');
+        const closeModal = (modal) => {
+            modal.classList.add('hidden-block');
+            modal.querySelectorAll('input').forEach(input => input.value = '');
+        };
+
+        loginBtn.addEventListener('click', () => openModal(loginModal));
+        registerBtn.addEventListener('click', () => openModal(registerModal));
+        closeLoginModal.addEventListener('click', () => closeModal(loginModal));
+        closeRegisterModal.addEventListener('click', () => closeModal(registerModal));
+        document.querySelectorAll('.modal-mask').forEach(mask => {
+            mask.addEventListener('click', (e) => e.target === mask && closeModal(mask));
+        });
+
+        // 游客登录
+        guestLoginBtn.addEventListener('click', () => {
+            currentUser = { isLogin: true, name: '游客', isDev: false };
+            updateUserUI();
+            alert('游客登录成功，仅可浏览，不可上传/留言/注册');
+        });
+
+        // 退出登录
+        logoutBtn.addEventListener('click', () => {
+            currentUser = { isLogin: false, name: '', isDev: false };
+            updateUserUI();
+            alert('退出登录成功');
+        });
+
+        // 注册功能
+        doRegisterBtn.addEventListener('click', () => {
+            const name = regName.value.trim();
+            const pwd = regPwd.value;
+            const pwd2 = regPwd2.value;
+            if (!name || !pwd || !pwd2) return alert('请填写完整信息！');
+            if (pwd !== pwd2) return alert('两次密码输入不一致！');
+            if (name === '张诺策') return alert('该用户名不可注册！');
+            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
+            const userList = JSON.parse(localStorage.getItem('classUserList'));
+            if (regApply.some(item => item.name === name) || userList.some(item => item.name === name)) {
+                return alert('该用户名已申请注册/已注册！');
+            }
+            regApply.push({ name, pwd, time: new Date().toLocaleDateString() });
+            localStorage.setItem('classRegApply', JSON.stringify(regApply));
+            closeModal(registerModal);
+            alert('注册申请提交成功，需经张诺策审核通过后方可登录！');
+        });
+
+        // 登录功能（适配新密码 a18533169568）
+        doLoginBtn.addEventListener('click', () => {
+            const name = loginName.value.trim();
+            const pwd = loginPwd.value;
+            if (!name || !pwd) return alert('请填写完整信息！');
+            const userList = JSON.parse(localStorage.getItem('classUserList'));
+            const user = userList.find(item => item.name === name && item.pwd === pwd);
+            if (!user) return alert('用户名或密码错误！');
+            const isDev = name === '张诺策';
+            currentUser = { isLogin: true, name, isDev };
+            updateUserUI();
+            closeModal(loginModal);
+            alert(`欢迎${isDev ? '开发者：' : ''}${name}登录！`);
+        });
+
+        // 更新用户UI
+        function updateUserUI() {
+            if (currentUser.isLogin) {
+                loginBtn.classList.add('hidden-block');
+                registerBtn.classList.add('hidden-block');
+                guestLoginBtn.classList.add('hidden-block');
+                logoutBtn.classList.remove('hidden-block');
+                userName.classList.remove('hidden-block');
+                userName.textContent = `当前登录：${currentUser.name}`;
+                devPanel.classList.toggle('hidden-block', !currentUser.isDev);
+            } else {
+                loginBtn.classList.remove('hidden-block');
+                registerBtn.classList.remove('hidden-block');
+                guestLoginBtn.classList.remove('hidden-block');
+                logoutBtn.classList.add('hidden-block');
+                userName.classList.add('hidden-block');
+                devPanel.classList.add('hidden-block');
             }
         }
 
-        function hideLandscapeTip() {
-            landscapeTip.style.opacity = 0;
-            setTimeout(() => landscapeTip.style.display = 'none', 500);
+        // 4. 开发者功能
+        const checkRegBtn = document.getElementById('checkRegBtn');
+        const checkFileBtn = document.getElementById('checkFileBtn');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+        const backupDataBtn = document.getElementById('backupDataBtn');
+        const restoreDataBtn = document.getElementById('restoreDataBtn');
+        const restoreFileInput = document.getElementById('restoreFileInput');
+        const checkRegModal = document.getElementById('checkRegModal');
+        const checkFileModal = document.getElementById('checkFileModal');
+        const closeCheckRegModal = document.getElementById('closeCheckRegModal');
+        const closeCheckFileModal = document.getElementById('closeCheckFileModal');
+        const regCheckList = document.getElementById('regCheckList');
+        const fileCheckList = document.getElementById('fileCheckList');
+
+        // 审核注册申请弹窗
+        checkRegBtn.addEventListener('click', () => {
+            openModal(checkRegModal);
+            renderRegCheckList();
+        });
+        closeCheckRegModal.addEventListener('click', () => closeModal(checkRegModal));
+
+        // 审核文件申请弹窗
+        checkFileBtn.addEventListener('click', () => {
+            openModal(checkFileModal);
+            renderFileCheckList();
+        });
+        closeCheckFileModal.addEventListener('click', () => closeModal(checkFileModal));
+
+        // 渲染注册审核列表
+        function renderRegCheckList() {
+            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
+            if (regApply.length === 0) {
+                regCheckList.innerHTML = '<div class="text-gray-400">暂无待审核的注册申请</div>';
+                return;
+            }
+            regCheckList.innerHTML = regApply.map((item, index) => `
+                <div class="p-3 border border-gray-200 rounded-lg flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">${item.name}</p>
+                        <p class="text-xs text-gray-500">申请时间：${item.time}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm" onclick="approveReg(${index})">通过</button>
+                        <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="rejectReg(${index})">拒绝</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // 2. 雪花生成
-        const createSnow = () => {
-            snow.innerHTML = '';
-            const snowCount = 150;
-            for (let i = 0; i < snowCount; i++) {
-                const flake = document.createElement('div');
-                flake.className = 'snow-flake';
-                const size = Math.random() * 5 + 1;
-                const speed = Math.random() * 15 + 10;
-                const left = Math.random() * 100;
-                flake.style.cssText = `width: ${size}px; height: ${size}px; left: ${left}vw; animation-duration: ${speed}s`;
-                snow.appendChild(flake);
+        // 通过注册申请
+        window.approveReg = (index) => {
+            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
+            const user = regApply[index];
+            const userList = JSON.parse(localStorage.getItem('classUserList'));
+            userList.push({ name: user.name, pwd: user.pwd, time: new Date().toLocaleDateString() });
+            localStorage.setItem('classUserList', JSON.stringify(userList));
+            regApply.splice(index, 1);
+            localStorage.setItem('classRegApply', JSON.stringify(regApply));
+            renderRegCheckList();
+            alert('注册申请审核通过！');
+        };
+
+        // 拒绝注册申请
+        window.rejectReg = (index) => {
+            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
+            regApply.splice(index, 1);
+            localStorage.setItem('classRegApply', JSON.stringify(regApply));
+            renderRegCheckList();
+            alert('注册申请已拒绝！');
+        };
+
+        // 渲染文件审核列表
+        function renderFileCheckList() {
+            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
+            if (fileApply.length === 0) {
+                fileCheckList.innerHTML = '<div class="text-gray-400">暂无待审核的文件上传申请</div>';
+                return;
             }
-        };
-        createSnow();
+            fileCheckList.innerHTML = fileApply.map((item, index) => `
+                <div class="p-3 border border-gray-200 rounded-lg flex flex-col gap-2">
+                    <div class="font-medium">${item.name}</div>
+                    <div class="text-xs text-gray-500">上传人：${item.uploader} | 上传时间：${item.time}</div>
+                    <div class="flex gap-2 self-end">
+                        <button class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm" onclick="approveFile(${index})">通过</button>
+                        <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="rejectFile(${index})">拒绝</button>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-        // 3. 祝福文字生成（频率翻倍：每0.15秒一个，全屏快速叠加）
-        const createRandomBlessText = () => {
-            const text = document.createElement('div');
-            text.className = 'bless-text';
-            text.textContent = blessTexts[Math.floor(Math.random() * blessTexts.length)];
-            text.style.left = `${Math.random() * 90}vw`;
-            text.style.top = `${Math.random() * 90}vh`;
-            const colors = ['#ff0000', '#ff69b4', '#ffff00', '#00ff00', '#ff4500'];
-            text.style.color = colors[Math.floor(Math.random() * colors.length)];
-            text.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
-            text.style.fontSize = `${Math.random() * 16 + 14}px`;
-            blessContainer.appendChild(text);
+        // 通过文件申请
+        window.approveFile = (index) => {
+            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
+            const file = fileApply[index];
+            const fileList = JSON.parse(localStorage.getItem('classFileList'));
+            fileList.push(file);
+            localStorage.setItem('classFileList', JSON.stringify(fileList));
+            fileApply.splice(index, 1);
+            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
+            renderFileCheckList();
+            renderFileList();
+            alert('文件上传申请审核通过！');
         };
 
-        // 4. 悬浮窗权限申请
-        const requestFloatPermission = () => {
-            hasFloatPermission = confirm('是否允许开启悬浮窗权限？开启后显示强制停止按钮');
-            if (hasFloatPermission) forceStopBtn.style.display = 'block';
+        // 拒绝文件申请
+        window.rejectFile = (index) => {
+            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
+            fileApply.splice(index, 1);
+            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
+            renderFileCheckList();
+            alert('文件上传申请已拒绝！');
         };
 
-        // 5. 强制关闭功能
-        const closePageAndBrowser = () => {
-            try {window.close(); window.location.href = 'about:blank';}
-            catch (e) {window.location.reload(); window.close();}
-        };
-        forceStopBtn.addEventListener('click', closePageAndBrowser);
-
-        // 6. 点击观看：仅显示选择框，不生成文字
-        watchBtn.addEventListener('click', () => {
-            requestFloatPermission();
-            watchBtn.style.display = 'none';
-            document.body.classList.add('blood-mode');
-            selectBox.style.display = 'flex';
+        // 重置所有数据
+        clearDataBtn.addEventListener('click', () => {
+            if (!confirm('确定要重置所有数据吗？此操作不可恢复！')) return;
+            localStorage.clear();
+            initLocalStorage();
+            alert('所有数据已重置！');
+            updateUserUI();
         });
 
-        // 7. 点击退出：恢复初始状态
-        exitBtn.addEventListener('click', () => {
-            selectBox.style.display = 'none';
-            document.body.classList.remove('blood-mode');
-            watchBtn.style.display = 'block';
-            blessContainer.style.display = 'none';
-            blessContainer.innerHTML = '';
-            clearInterval(textInterval);
-            forceStopBtn.style.display = 'none';
-            hasFloatPermission = false;
+        // 备份数据
+        backupDataBtn.addEventListener('click', () => {
+            const data = {
+                classUserList: JSON.parse(localStorage.getItem('classUserList')),
+                classRegApply: JSON.parse(localStorage.getItem('classRegApply')),
+                classFileList: JSON.parse(localStorage.getItem('classFileList')),
+                classFileApply: JSON.parse(localStorage.getItem('classFileApply')),
+                classAlbumList: JSON.parse(localStorage.getItem('classAlbumList')),
+                classMessageList: JSON.parse(localStorage.getItem('classMessageList'))
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `班级群数据备份_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            alert('数据备份成功！');
         });
 
-        // 8. 🔥 点击确定：立即显示祝福文字（高频）+ 5秒后同步触发弹窗+音频
-        confirmBtn.addEventListener('click', () => {
-            selectBox.style.display = 'none';
-            // 立即开启高频祝福文字（每0.15秒一个，比之前快一倍）
-            blessContainer.style.display = 'block';
-            textInterval = setInterval(createRandomBlessText, 150);
-
-            // 5秒后零延迟同步触发
-            setTimeout(() => {
-                // 弹窗立即显示（移除渐变动画，瞬间出现）
-                popup.style.display = 'block';
-                // 音频立即播放（预加载优化，无延迟）
-                music.currentTime = 0;
-                music.play().catch(err => console.log('音频播放失败：', err));
-                // 停止生成文字
-                clearInterval(textInterval);
-            }, 5000);
+        // 恢复数据
+        restoreDataBtn.addEventListener('click', () => {
+            restoreFileInput.click();
+        });
+        restoreFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    localStorage.setItem('classUserList', JSON.stringify(data.classUserList || []));
+                    localStorage.setItem('classRegApply', JSON.stringify(data.classRegApply || []));
+                    localStorage.setItem('classFileList', JSON.stringify(data.classFileList || []));
+                    localStorage.setItem('classFileApply', JSON.stringify(data.classFileApply || []));
+                    localStorage.setItem('classAlbumList', JSON.stringify(data.classAlbumList || []));
+                    localStorage.setItem('classMessageList', JSON.stringify(data.classMessageList || []));
+                    alert('数据恢复成功！');
+                    // 刷新审核列表
+                    if (checkRegModal.classList.contains('hidden-block') === false) renderRegCheckList();
+                    if (checkFileModal.classList.contains('hidden-block') === false) renderFileCheckList();
+                    renderFileList();
+                    renderMessageList();
+                    renderAlbumList();
+                } catch (err) {
+                    alert('数据恢复失败！文件格式错误');
+                }
+            };
+            reader.readAsText(file);
         });
 
-        // 9. 点击X：彻底恢复初始状态
-        popupClose.addEventListener('click', () => {
-            popup.style.display = 'none';
-            document.body.classList.remove('blood-mode');
-            watchBtn.style.display = 'block';
-            blessContainer.style.display = 'none';
-            blessContainer.innerHTML = '';
-            music.pause();
-            music.currentTime = 0;
-            createSnow();
-            forceStopBtn.style.display = 'none';
-            hasFloatPermission = false;
-            clearInterval(textInterval);
+        // 5. 文件上传功能
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const uploadFileModal = document.getElementById('uploadFileModal');
+        const closeUploadFileModal = document.getElementById('closeUploadFileModal');
+        const doUploadFileBtn = document.getElementById('doUploadFileBtn');
+        const uploadFileName = document.getElementById('uploadFileName');
+        const uploadFileInput = document.getElementById('uploadFileInput');
+
+        uploadFileBtn.addEventListener('click', () => {
+            if (!currentUser.isLogin) return alert('请先登录！');
+            if (currentUser.name === '游客') return alert('游客不可上传文件！');
+            openModal(uploadFileModal);
+        });
+        closeUploadFileModal.addEventListener('click', () => closeModal(uploadFileModal));
+
+        // 提交文件上传
+        doUploadFileBtn.addEventListener('click', () => {
+            const fileName = uploadFileName.value.trim();
+            const file = uploadFileInput.files[0];
+            if (!fileName) return alert('请输入文件名称！');
+            if (!file) return alert('请选择要上传的文件！');
+            
+            // 模拟文件上传（实际项目需后端支持，这里仅存文件名和上传信息）
+            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
+            fileApply.push({
+                name: fileName,
+                originalName: file.name,
+                size: (file.size / 1024).toFixed(2) + 'KB',
+                uploader: currentUser.name,
+                time: new Date().toLocaleDateString()
+            });
+            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
+            
+            closeModal(uploadFileModal);
+            uploadFileInput.value = '';
+            alert('文件上传申请已提交，需经审核通过后展示！');
         });
 
-        // 页面卸载清理
-        window.addEventListener('beforeunload', () => {
-            if (orientationWatchId) window.removeEventListener('deviceorientation', handleOrientation, false);
+        // 渲染文件列表
+        function renderFileList() {
+            const fileList = JSON.parse(localStorage.getItem('classFileList'));
+            const fileListEl = document.getElementById('fileList');
+            if (fileList.length === 0) {
+                fileListEl.innerHTML = '<div class="text-gray-400 text-center py-8">暂无审核通过的学习资料</div>';
+                return;
+            }
+            fileListEl.innerHTML = fileList.map(item => `
+                <div class="file-item p-3 border border-gray-200 rounded-lg flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">${item.name}</p>
+                        <p class="text-xs text-gray-500">${item.originalName} | ${item.size} | 上传人：${item.uploader}</p>
+                    </div>
+                    <button class="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm">下载</button>
+                </div>
+            `).join('');
+        }
+
+        // 6. 留言功能
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const messageList = document.getElementById('messageList');
+
+        sendMessageBtn.addEventListener('click', () => {
+            if (!currentUser.isLogin) return alert('请先登录！');
+            if (currentUser.name === '游客') return alert('游客不可留言！');
+            const content = messageInput.value.trim();
+            if (!content) return alert('请输入留言内容！');
+            
+            const messageListData = JSON.parse(localStorage.getItem('classMessageList'));
+            messageListData.push({
+                name: currentUser.name,
+                content,
+                time: new Date().toLocaleDateString()
+            });
+            localStorage.setItem('classMessageList', JSON.stringify(messageListData));
+            
+            messageInput.value = '';
+            renderMessageList();
+        });
+
+        // 渲染留言列表
+        function renderMessageList() {
+            const messageListData = JSON.parse(localStorage.getItem('classMessageList'));
+            messageList.innerHTML = messageListData.map(item => `
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between">
+                        <span class="font-medium">${item.name}</span>
+                        <span class="text-gray-400 text-sm">${item.time}</span>
+                    </div>
+                    <p class="text-gray-600 mt-1">${item.content}</p>
+                </div>
+            `).join('');
+        }
+
+        // 7. 相册功能（简化版，实际需图片上传/预览）
+        const uploadAlbumBtn = document.getElementById('uploadAlbumBtn');
+        const albumList = document.getElementById('albumList');
+
+        uploadAlbumBtn.addEventListener('click', () => {
+            if (!currentUser.isLogin) return alert('请先登录！');
+            if (currentUser.name === '游客') return alert('游客不可上传相册！');
+            alert('相册上传功能暂需后端支持，已模拟提交审核申请！');
+            // 实际项目中需实现图片选择、预览、上传审核逻辑
+        });
+
+        // 渲染相册列表
+        function renderAlbumList() {
+            const albumListData = JSON.parse(localStorage.getItem('classAlbumList'));
+            if (albumListData.length === 0) {
+                albumList.innerHTML = '<div class="text-gray-400 text-center py-8 col-span-full">暂无审核通过的相册图片</div>';
+                return;
+            }
+            // 实际项目中需渲染图片预览
+            albumList.innerHTML = albumListData.map(item => `
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <img src="${item.url}" alt="${item.name}" class="w-full h-40 object-cover">
+                    <p class="p-2 text-center text-sm">${item.name}</p>
+                </div>
+            `).join('');
+        }
+
+        // 8. 音乐播放器功能（完整实现）
+        let currentSongIndex = 0;
+        let audio = new Audio();
+        let isPlaying = false;
+        let lyricIndex = 0;
+
+        const playPause = document.getElementById('playPause');
+        const playPauseIcon = document.getElementById('playPauseIcon');
+        const prevSong = document.getElementById('prevSong');
+        const nextSong = document.getElementById('nextSong');
+        const currentSongTitle = document.getElementById('currentSongTitle');
+        const currentSongSinger = document.getElementById('currentSongSinger');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const currentTime = document.getElementById('currentTime');
+        const totalTime = document.getElementById('totalTime');
+        const volumeBar = document.getElementById('volumeBar');
+        const volumeFill = document.getElementById('volumeFill');
+        const volumeIcon = document.getElementById('volumeIcon');
+
+        // 初始化播放器
+        function initPlayer() {
+            loadSong(currentSongIndex);
+            // 播放/暂停
+            playPause.addEventListener('click', togglePlay);
+            // 上一曲/下一曲
+            prevSong.addEventListener('click', () => changeSong(-1));
+            nextSong.addEventListener('click', () => changeSong(1));
+            // 进度条点击
+            progressBar.addEventListener('click', setProgress);
+            // 音量调节
+            volumeBar.addEventListener('click', setVolume);
+            // 音频事件监听
+            audio.addEventListener('timeupdate', updateProgress);
+            audio.addEventListener('ended', () => changeSong(1));
+            audio.addEventListener('loadedmetadata', () => {
+                totalTime.textContent = formatTime(audio.duration);
+            });
+        }
+
+        // 加载歌曲
+        function loadSong(index) {
+            const song = songList[index];
+            audio.src = song.url;
+            currentSongTitle.textContent = song.title;
+            currentSongSinger.textContent = song.singer;
+            lyricIndex = 0;
+        }
+
+        // 播放/暂停切换
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                playPauseIcon.classList.remove('fa-pause');
+                playPauseIcon.classList.add('fa-play');
+            } else {
+                audio.play();
+                playPauseIcon.classList.remove('fa-play');
+                playPauseIcon.classList.add('fa-pause');
+                // 歌词展示
+                setInterval(showLyric, 1000);
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // 切换歌曲
+        function changeSong(direction) {
+            currentSongIndex = (currentSongIndex + direction + songList.length) % songList.length;
+            loadSong(currentSongIndex);
+            if (isPlaying) audio.play();
+        }
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        // 更新进度条
+        function updateProgress() {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = `${progress}%`;
+            currentTime.textContent = formatTime(audio.currentTime);
+        }
+
+        // 设置进度
+        function setProgress(e) {
+            const width = progressBar.clientWidth;
+            const clickX = e.offsetX;
+            const progress = (clickX / width) * audio.duration;
+            audio.currentTime = progress;
+        }
+
+        // 设置音量
+        function setVolume(e) {
+            const width = volumeBar.clientWidth;
+            const clickX = e.offsetX;
+            const volume = clickX / width;
+            audio.volume = volume;
+            volumeFill.style.width = `${volume * 100}%`;
+            // 更新音量图标
+            if (volume === 0) {
+                volumeIcon.classList.remove('fa-volume-up', 'fa-volume-down');
+                volumeIcon.classList.add('fa-volume-mute');
+            } else if (volume < 0.5) {
+                volumeIcon.classList.remove('fa-volume-up', 'fa-volume-mute');
+                volumeIcon.classList.add('fa-volume-down');
+            } else {
+                volumeIcon.classList.remove('fa-volume-down', 'fa-volume-mute');
+                volumeIcon.classList.add('fa-volume-up');
+            }
+        }
+
+        // 显示歌词弹窗
+        function showLyric() {
+            const song = songList[currentSongIndex];
+            if (lyricIndex >= song.lyric.length) return;
+            const [time, text] = song.lyric[lyricIndex];
+            if (Math.floor(audio.currentTime) === time) {
+                const lyricPopup = document.createElement('div');
+                lyricPopup.className = 'lyric-popup bg-indigo-600 text-white';
+                lyricPopup.textContent = text;
+                document.body.appendChild(lyricPopup);
+                // 随机位置
+                lyricPopup.style.left = `${Math.random() * 80 + 10}%`;
+                // 移除弹窗
+                setTimeout(() => {
+                    lyricPopup.remove();
+                }, 5500);
+                lyricIndex++;
+            }
+        }
+
+        // 初始化播放器
+        initPlayer();
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            // 确保本地存储初始化完成
+            initLocalStorage();
         });
     </script>
 </body>

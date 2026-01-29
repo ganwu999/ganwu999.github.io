@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班级群 - 制作人：张诺策</title>
+    <title>班级群 - 制作人：感悟</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -159,7 +159,7 @@
         <div class="flex flex-wrap justify-between items-center mb-8 bg-white/80 backdrop-blur(5px) p-4 rounded-xl">
             <div class="mb-4 md:mb-0">
                 <h1 class="text-2xl font-bold text-indigo-700">我们的班级群</h1>
-                <p class="text-gray-500 text-sm">制作人：张诺策 | 时光不老，我们不散</p>
+                <p class="text-gray-500 text-sm">制作人：感悟 | 时光不老，我们不散</p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <button id="guestLoginBtn" class="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors">游客登录</button>
@@ -170,9 +170,9 @@
             </div>
         </div>
 
-        <!-- 开发者功能面板（仅张诺策可见） -->
+        <!-- 开发者功能面板（仅感悟可见） -->
         <div id="devPanel" class="mb-8 bg-purple-50 p-4 rounded-xl hidden-block">
-            <h3 class="text-xl font-bold text-purple-700 mb-3 flex items-center"><i class="fa-solid fa-code mr-2"></i>开发者面板（张诺策专属）</h3>
+            <h3 class="text-xl font-bold text-purple-700 mb-3 flex items-center"><i class="fa-solid fa-code mr-2"></i>开发者面板（感悟专属）</h3>
             <div class="flex flex-wrap gap-3 mb-4">
                 <button id="checkRegBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">审核注册账号</button>
                 <button id="checkFileBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">审核上传文件</button>
@@ -257,7 +257,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="border border-gray-200 p-2">张诺策</td>
+                            <td class="border border-gray-200 p-2">感悟</td>
                             <td class="border border-gray-200 p-2">开发者专属</td>
                             <td class="border border-gray-200 p-2">开发者专属</td>
                         </tr>
@@ -299,7 +299,7 @@
                 <div id="messageList" class="space-y-3">
                     <div class="p-3 bg-gray-50 rounded-lg">
                         <div class="flex justify-between">
-                            <span class="font-medium">张诺策</span>
+                            <span class="font-medium">感悟</span>
                             <span class="text-gray-400 text-sm">2026-01-27</span>
                         </div>
                         <p class="text-gray-600 mt-1">欢迎大家使用班级群网站，有问题可以在这里留言~</p>
@@ -383,7 +383,7 @@
                     <label class="block text-gray-700 text-sm mb-1">确认密码</label>
                     <input type="password" id="regPwd2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <p class="text-gray-500 text-sm"><i class="fa-solid fa-info-circle mr-1"></i> 注册后需经张诺策审核通过方可登录</p>
+                <p class="text-gray-500 text-sm"><i class="fa-solid fa-info-circle mr-1"></i> 注册后需经感悟审核通过方可登录</p>
                 <button id="doRegisterBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">提交注册</button>
                 <button id="closeRegisterModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
             </div>
@@ -432,45 +432,51 @@
     <script>
         // 全局变量
         let currentUser = { isLogin: false, name: '', isDev: false };
+        let currentSongIndex = 0;
+        let audio = new Audio();
+        let isPlaying = false;
         
-        // ================= 关键更新：GitHub仓库配置（修复变量命名错误） =================
+        // ================= 关键更新：GitHub仓库配置 =================
         const GITHUB_MUSIC_BASE_URL = 'https://raw.githubusercontent.com/ganwu999/ganwu999.github.io/main/music/';
         
-        // 初始化本地存储（已更新开发者账号：张诺策 / a18533169568）
+        // 初始化本地存储（更新开发者账号：感悟 / 20111221）
         const initLocalStorage = () => {
             const keys = ['classUserList', 'classRegApply', 'classFileList', 'classFileApply', 'classAlbumList', 'classMessageList'];
             keys.forEach(key => {
                 if (!localStorage.getItem(key)) {
-                    localStorage.setItem(key, key === 'classMessageList' ? JSON.stringify([{name:'张诺策',content:'欢迎大家使用班级群网站，有问题可以在这里留言~',time:'2026-01-27'}]) : '[]');
+                    localStorage.setItem(key, key === 'classMessageList' ? JSON.stringify([{name:'感悟',content:'欢迎大家使用班级群网站，有问题可以在这里留言~',time:'2026-01-27'}]) : '[]');
                 }
             });
-            // 初始化开发者账号（已更新密码为 a18533169568）
+            // 初始化开发者账号（强制更新，确保旧数据被覆盖）
             let userList = JSON.parse(localStorage.getItem('classUserList'));
-            if (!userList.some(item => item.name === '张诺策')) {
-                userList.push({ name: '张诺策', pwd: 'a18533169568', time: new Date().toLocaleDateString() });
-                localStorage.setItem('classUserList', JSON.stringify(userList));
-            }
+            // 先移除旧的「张诺策」账号（如果存在）
+            userList = userList.filter(item => item.name !== '张诺策');
+            // 移除旧的「感悟」账号（如果存在，保证密码最新）
+            userList = userList.filter(item => item.name !== '感悟');
+            // 添加新的开发者账号
+            userList.push({ name: '感悟', pwd: '20111221', time: new Date().toLocaleDateString() });
+            localStorage.setItem('classUserList', JSON.stringify(userList));
         };
         initLocalStorage();
 
-        // 歌曲列表（适配GitHub仓库路径，文件名与仓库中 music 文件夹内一致）
+        // 歌曲列表
         const songList = [
             { 
                 title: '稻香', 
                 singer: '周杰伦', 
-                url: `${https://github.com/ganwu999/ganwu999.github.io}dao xiang.mp3`, // 对应仓库中 music/dao xiang.mp3
+                url: `${GITHUB_MUSIC_BASE_URL}dao xiang.mp3`, 
                 lyric: [[0,'对这个世界如果你有太多的抱怨'],[3,'跌倒了就不敢继续往前走'],[6,'为什么人要这么的脆弱 堕落'],[9,'请你打开电视看看'],[12,'多少人为生命在努力勇敢的走下去'],[15,'我们是不是该知足'],[18,'珍惜一切 就算没有拥有'],[22,'还记得你说家是唯一的城堡'],[26,'随着稻香河流继续奔跑'],[29,'微微笑 小时候的梦我知道'],[33,'不要哭让萤火虫带着你逃跑'],[36,'乡间的歌谣永远的依靠'],[40,'回家吧 回到最初的美好']] 
             },
             { 
                 title: '晴天', 
                 singer: '周杰伦', 
-                url: `$https://github.com/ganwu999/ganwu999.github.io}qing tian.mp3`, // 对应仓库中 music/qing tian.mp3
+                url: `${GITHUB_MUSIC_BASE_URL}qing tian.mp3`, 
                 lyric: [[0,'故事的小黄花 从出生那年就飘着'],[4,'童年的荡秋千 随记忆一直晃到现在'],[8,'rui sou sou xi dou xi la'],[11,'sou la xi xi xi xi la xi la sou'],[15,'吹着前奏望着天空 我想起花瓣试着掉落']] 
             },
             { 
                 title: '红色高跟鞋', 
                 singer: '蔡健雅', 
-                url: `$https://github.com/ganwu999/ganwu999.github.io}hong se gao gen xie.mp3`, // 对应仓库中 music/hong se gao gen xie.mp3
+                url: `${GITHUB_MUSIC_BASE_URL}hong se gao gen xie.mp3`, 
                 lyric: [[0,'该怎么去形容你最贴切'],[4,'拿什么跟你作比较才算特别'],[8,'对你的感觉 强烈'],[11,'却又不太了解 只凭直觉']] 
             }
         ];
@@ -481,7 +487,7 @@
         const verifyContainer = document.querySelector('.verify-container');
         const pageContainer = document.querySelector('.page-container');
         verifyBtn.addEventListener('click', () => {
-            if (verifyInput.value.trim() === '张诺策') {
+            if (verifyInput.value.trim() === '感悟') {
                 verifyContainer.classList.add('verify-hidden');
                 setTimeout(() => {
                     pageContainer.style.display = 'block';
@@ -527,7 +533,62 @@
             });
         });
 
-        // 3. 账号系统（已适配新账号密码）
+        // 3. 数据渲染函数实现
+        function renderFileList() {
+            const fileList = document.getElementById('fileList');
+            const files = JSON.parse(localStorage.getItem('classFileList'));
+            
+            if (files.length === 0) {
+                fileList.innerHTML = '<div class="text-gray-400 text-center py-8">暂无审核通过的学习资料</div>';
+                return;
+            }
+            
+            fileList.innerHTML = files.map(file => `
+                <div class="file-item p-3 border rounded-lg flex justify-between items-center">
+                    <div>
+                        <div class="font-medium">${file.name}</div>
+                        <div class="text-xs text-gray-500">上传者：${file.uploader} | 上传时间：${file.time}</div>
+                    </div>
+                    <button class="text-indigo-600 hover:text-indigo-800" onclick="downloadFile('${file.name}')">
+                        <i class="fa-solid fa-download"></i> 下载
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderAlbumList() {
+            const albumList = document.getElementById('albumList');
+            const albums = JSON.parse(localStorage.getItem('classAlbumList'));
+            
+            if (albums.length === 0) {
+                albumList.innerHTML = '<div class="text-gray-400 text-center py-8 col-span-full">暂无审核通过的相册图片</div>';
+                return;
+            }
+            
+            albumList.innerHTML = albums.map(album => `
+                <div class="rounded-lg overflow-hidden shadow-md">
+                    <img src="${album.url}" alt="${album.name}" class="w-full h-48 object-cover">
+                    <div class="p-2 text-center text-sm">${album.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderMessageList() {
+            const messageList = document.getElementById('messageList');
+            const messages = JSON.parse(localStorage.getItem('classMessageList'));
+            
+            messageList.innerHTML = messages.map(msg => `
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between">
+                        <span class="font-medium">${msg.name}</span>
+                        <span class="text-gray-400 text-sm">${msg.time}</span>
+                    </div>
+                    <p class="text-gray-600 mt-1">${msg.content}</p>
+                </div>
+            `).join('');
+        }
+
+        // 4. 账号系统（适配新账号 感悟/20111221）
         const loginBtn = document.getElementById('loginBtn');
         const registerBtn = document.getElementById('registerBtn');
         const guestLoginBtn = document.getElementById('guestLoginBtn');
@@ -581,7 +642,7 @@
             const pwd2 = regPwd2.value;
             if (!name || !pwd || !pwd2) return alert('请填写完整信息！');
             if (pwd !== pwd2) return alert('两次密码输入不一致！');
-            if (name === '张诺策') return alert('该用户名不可注册！');
+            if (name === '感悟') return alert('该用户名不可注册！');
             const regApply = JSON.parse(localStorage.getItem('classRegApply'));
             const userList = JSON.parse(localStorage.getItem('classUserList'));
             if (regApply.some(item => item.name === name) || userList.some(item => item.name === name)) {
@@ -590,10 +651,10 @@
             regApply.push({ name, pwd, time: new Date().toLocaleDateString() });
             localStorage.setItem('classRegApply', JSON.stringify(regApply));
             closeModal(registerModal);
-            alert('注册申请提交成功，需经张诺策审核通过后方可登录！');
+            alert('注册申请提交成功，需经感悟审核通过后方可登录！');
         });
 
-        // 登录功能（适配新密码 a18533169568）
+        // 登录功能（适配新账号 感悟/20111221）
         doLoginBtn.addEventListener('click', () => {
             const name = loginName.value.trim();
             const pwd = loginPwd.value;
@@ -601,7 +662,7 @@
             const userList = JSON.parse(localStorage.getItem('classUserList'));
             const user = userList.find(item => item.name === name && item.pwd === pwd);
             if (!user) return alert('用户名或密码错误！');
-            const isDev = name === '张诺策';
+            const isDev = name === '感悟';
             currentUser = { isLogin: true, name, isDev };
             updateUserUI();
             closeModal(loginModal);
@@ -628,7 +689,7 @@
             }
         }
 
-        // 4. 开发者功能
+        // 5. 开发者功能实现
         const checkRegBtn = document.getElementById('checkRegBtn');
         const checkFileBtn = document.getElementById('checkFileBtn');
         const clearDataBtn = document.getElementById('clearDataBtn');
@@ -642,128 +703,124 @@
         const regCheckList = document.getElementById('regCheckList');
         const fileCheckList = document.getElementById('fileCheckList');
 
-        // 审核注册申请弹窗
+        // 审核注册申请
         checkRegBtn.addEventListener('click', () => {
             openModal(checkRegModal);
-            renderRegCheckList();
-        });
-        closeCheckRegModal.addEventListener('click', () => closeModal(checkRegModal));
-
-        // 审核文件申请弹窗
-        checkFileBtn.addEventListener('click', () => {
-            openModal(checkFileModal);
-            renderFileCheckList();
-        });
-        closeCheckFileModal.addEventListener('click', () => closeModal(checkFileModal));
-
-        // 渲染注册审核列表
-        function renderRegCheckList() {
             const regApply = JSON.parse(localStorage.getItem('classRegApply'));
+            
             if (regApply.length === 0) {
                 regCheckList.innerHTML = '<div class="text-gray-400">暂无待审核的注册申请</div>';
                 return;
             }
+            
             regCheckList.innerHTML = regApply.map((item, index) => `
-                <div class="p-3 border border-gray-200 rounded-lg flex justify-between items-center">
+                <div class="p-3 border rounded-lg flex justify-between items-center">
                     <div>
-                        <p class="font-medium">${item.name}</p>
-                        <p class="text-xs text-gray-500">申请时间：${item.time}</p>
+                        <div class="font-medium">${item.name}</div>
+                        <div class="text-xs text-gray-500">申请时间：${item.time}</div>
                     </div>
                     <div class="flex gap-2">
-                        <button class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm" onclick="approveReg(${index})">通过</button>
-                        <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="rejectReg(${index})">拒绝</button>
+                        <button class="px-2 py-1 bg-green-600 text-white rounded" onclick="approveReg(${index})">通过</button>
+                        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="rejectReg(${index})">拒绝</button>
                     </div>
                 </div>
             `).join('');
-        }
+        });
 
-        // 通过注册申请
-        window.approveReg = (index) => {
-            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
-            const user = regApply[index];
-            const userList = JSON.parse(localStorage.getItem('classUserList'));
-            userList.push({ name: user.name, pwd: user.pwd, time: new Date().toLocaleDateString() });
-            localStorage.setItem('classUserList', JSON.stringify(userList));
-            regApply.splice(index, 1);
-            localStorage.setItem('classRegApply', JSON.stringify(regApply));
-            renderRegCheckList();
-            alert('注册申请审核通过！');
-        };
-
-        // 拒绝注册申请
-        window.rejectReg = (index) => {
-            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
-            regApply.splice(index, 1);
-            localStorage.setItem('classRegApply', JSON.stringify(regApply));
-            renderRegCheckList();
-            alert('注册申请已拒绝！');
-        };
-
-        // 渲染文件审核列表
-        function renderFileCheckList() {
+        // 审核文件申请
+        checkFileBtn.addEventListener('click', () => {
+            openModal(checkFileModal);
             const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
+            
             if (fileApply.length === 0) {
                 fileCheckList.innerHTML = '<div class="text-gray-400">暂无待审核的文件上传申请</div>';
                 return;
             }
+            
             fileCheckList.innerHTML = fileApply.map((item, index) => `
-                <div class="p-3 border border-gray-200 rounded-lg flex flex-col gap-2">
-                    <div class="font-medium">${item.name}</div>
-                    <div class="text-xs text-gray-500">上传人：${item.uploader} | 上传时间：${item.time}</div>
-                    <div class="flex gap-2 self-end">
-                        <button class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm" onclick="approveFile(${index})">通过</button>
-                        <button class="px-3 py-1 bg-red-600 text-white rounded-lg text-sm" onclick="rejectFile(${index})">拒绝</button>
+                <div class="p-3 border rounded-lg flex justify-between items-center">
+                    <div>
+                        <div class="font-medium">${item.name}</div>
+                        <div class="text-xs text-gray-500">上传者：${item.uploader} | 上传时间：${item.time}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-2 py-1 bg-green-600 text-white rounded" onclick="approveFile(${index})">通过</button>
+                        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="rejectFile(${index})">拒绝</button>
                     </div>
                 </div>
             `).join('');
-        }
+        });
 
-        // 通过文件申请
-        window.approveFile = (index) => {
+        // 注册审核通过
+        window.approveReg = function(index) {
+            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
+            const userList = JSON.parse(localStorage.getItem('classUserList'));
+            userList.push(regApply[index]);
+            regApply.splice(index, 1);
+            localStorage.setItem('classRegApply', JSON.stringify(regApply));
+            localStorage.setItem('classUserList', JSON.stringify(userList));
+            alert('审核通过！');
+            checkRegBtn.click();
+        };
+
+        // 注册审核拒绝
+        window.rejectReg = function(index) {
+            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
+            regApply.splice(index, 1);
+            localStorage.setItem('classRegApply', JSON.stringify(regApply));
+            alert('审核拒绝！');
+            checkRegBtn.click();
+        };
+
+        // 文件审核通过
+        window.approveFile = function(index) {
             const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
-            const file = fileApply[index];
             const fileList = JSON.parse(localStorage.getItem('classFileList'));
-            fileList.push(file);
-            localStorage.setItem('classFileList', JSON.stringify(fileList));
+            fileList.push(fileApply[index]);
             fileApply.splice(index, 1);
             localStorage.setItem('classFileApply', JSON.stringify(fileApply));
-            renderFileCheckList();
-            renderFileList();
-            alert('文件上传申请审核通过！');
+            localStorage.setItem('classFileList', JSON.stringify(fileList));
+            alert('审核通过！');
+            checkFileBtn.click();
         };
 
-        // 拒绝文件申请
-        window.rejectFile = (index) => {
+        // 文件审核拒绝
+        window.rejectFile = function(index) {
             const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
             fileApply.splice(index, 1);
             localStorage.setItem('classFileApply', JSON.stringify(fileApply));
-            renderFileCheckList();
-            alert('文件上传申请已拒绝！');
+            alert('审核拒绝！');
+            checkFileBtn.click();
         };
+
+        // 关闭审核模态框
+        closeCheckRegModal.addEventListener('click', () => closeModal(checkRegModal));
+        closeCheckFileModal.addEventListener('click', () => closeModal(checkFileModal));
 
         // 重置所有数据
         clearDataBtn.addEventListener('click', () => {
             if (!confirm('确定要重置所有数据吗？此操作不可恢复！')) return;
             localStorage.clear();
             initLocalStorage();
-            alert('所有数据已重置！');
-            updateUserUI();
+            alert('数据已重置！');
+            location.reload();
         });
 
         // 备份数据
         backupDataBtn.addEventListener('click', () => {
-            const data = {
-                classUserList: JSON.parse(localStorage.getItem('classUserList')),
-                classRegApply: JSON.parse(localStorage.getItem('classRegApply')),
-                classFileList: JSON.parse(localStorage.getItem('classFileList')),
-                classFileApply: JSON.parse(localStorage.getItem('classFileApply')),
-                classAlbumList: JSON.parse(localStorage.getItem('classAlbumList')),
-                classMessageList: JSON.parse(localStorage.getItem('classMessageList'))
+            const backupData = {
+                userList: JSON.parse(localStorage.getItem('classUserList')),
+                regApply: JSON.parse(localStorage.getItem('classRegApply')),
+                fileList: JSON.parse(localStorage.getItem('classFileList')),
+                fileApply: JSON.parse(localStorage.getItem('classFileApply')),
+                albumList: JSON.parse(localStorage.getItem('classAlbumList')),
+                messageList: JSON.parse(localStorage.getItem('classMessageList'))
             };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            
+            const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `班级群数据备份_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+            a.download = `班级群数据备份_${new Date().toLocaleDateString()}.json`;
             a.click();
             URL.revokeObjectURL(a.href);
             alert('数据备份成功！');
@@ -773,34 +830,31 @@
         restoreDataBtn.addEventListener('click', () => {
             restoreFileInput.click();
         });
+
         restoreFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = function(event) {
                 try {
-                    const data = JSON.parse(e.target.result);
-                    localStorage.setItem('classUserList', JSON.stringify(data.classUserList || []));
-                    localStorage.setItem('classRegApply', JSON.stringify(data.classRegApply || []));
-                    localStorage.setItem('classFileList', JSON.stringify(data.classFileList || []));
-                    localStorage.setItem('classFileApply', JSON.stringify(data.classFileApply || []));
-                    localStorage.setItem('classAlbumList', JSON.stringify(data.classAlbumList || []));
-                    localStorage.setItem('classMessageList', JSON.stringify(data.classMessageList || []));
+                    const data = JSON.parse(event.target.result);
+                    localStorage.setItem('classUserList', JSON.stringify(data.userList || []));
+                    localStorage.setItem('classRegApply', JSON.stringify(data.regApply || []));
+                    localStorage.setItem('classFileList', JSON.stringify(data.fileList || []));
+                    localStorage.setItem('classFileApply', JSON.stringify(data.fileApply || []));
+                    localStorage.setItem('classAlbumList', JSON.stringify(data.albumList || []));
+                    localStorage.setItem('classMessageList', JSON.stringify(data.messageList || []));
                     alert('数据恢复成功！');
-                    // 刷新审核列表
-                    if (checkRegModal.classList.contains('hidden-block') === false) renderRegCheckList();
-                    if (checkFileModal.classList.contains('hidden-block') === false) renderFileCheckList();
-                    renderFileList();
-                    renderMessageList();
-                    renderAlbumList();
+                    location.reload();
                 } catch (err) {
-                    alert('数据恢复失败！文件格式错误');
+                    alert('数据格式错误，恢复失败！');
                 }
             };
             reader.readAsText(file);
         });
 
-        // 5. 文件上传功能
+        // 6. 文件上传功能实现
         const uploadFileBtn = document.getElementById('uploadFileBtn');
         const uploadFileModal = document.getElementById('uploadFileModal');
         const closeUploadFileModal = document.getElementById('closeUploadFileModal');
@@ -809,130 +863,72 @@
         const uploadFileInput = document.getElementById('uploadFileInput');
 
         uploadFileBtn.addEventListener('click', () => {
-            if (!currentUser.isLogin) return alert('请先登录！');
-            if (currentUser.name === '游客') return alert('游客不可上传文件！');
+            if (!currentUser.isLogin) {
+                alert('请先登录！');
+                openModal(loginModal);
+                return;
+            }
             openModal(uploadFileModal);
         });
+
         closeUploadFileModal.addEventListener('click', () => closeModal(uploadFileModal));
 
-        // 提交文件上传
         doUploadFileBtn.addEventListener('click', () => {
             const fileName = uploadFileName.value.trim();
             const file = uploadFileInput.files[0];
+            
             if (!fileName) return alert('请输入文件名称！');
             if (!file) return alert('请选择要上传的文件！');
             
-            // 模拟文件上传（实际项目需后端支持，这里仅存文件名和上传信息）
+            // 模拟文件上传（实际项目中需后端支持）
             const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
             fileApply.push({
                 name: fileName,
-                originalName: file.name,
-                size: (file.size / 1024).toFixed(2) + 'KB',
                 uploader: currentUser.name,
-                time: new Date().toLocaleDateString()
+                time: new Date().toLocaleDateString(),
+                size: (file.size / 1024).toFixed(2) + 'KB',
+                type: file.type
             });
-            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
             
+            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
             closeModal(uploadFileModal);
+            alert('文件上传申请提交成功，需经审核通过后方可展示！');
+            uploadFileName.value = '';
             uploadFileInput.value = '';
-            alert('文件上传申请已提交，需经审核通过后展示！');
         });
 
-        // 渲染文件列表
-        function renderFileList() {
-            const fileList = JSON.parse(localStorage.getItem('classFileList'));
-            const fileListEl = document.getElementById('fileList');
-            if (fileList.length === 0) {
-                fileListEl.innerHTML = '<div class="text-gray-400 text-center py-8">暂无审核通过的学习资料</div>';
-                return;
-            }
-            fileListEl.innerHTML = fileList.map(item => `
-                <div class="file-item p-3 border border-gray-200 rounded-lg flex justify-between items-center">
-                    <div>
-                        <p class="font-medium">${item.name}</p>
-                        <p class="text-xs text-gray-500">${item.originalName} | ${item.size} | 上传人：${item.uploader}</p>
-                    </div>
-                    <button class="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm">下载</button>
-                </div>
-            `).join('');
-        }
-
-        // 6. 留言功能
-        const messageInput = document.getElementById('messageInput');
+        // 7. 留言功能实现
         const sendMessageBtn = document.getElementById('sendMessageBtn');
-        const messageList = document.getElementById('messageList');
+        const messageInput = document.getElementById('messageInput');
 
         sendMessageBtn.addEventListener('click', () => {
-            if (!currentUser.isLogin) return alert('请先登录！');
-            if (currentUser.name === '游客') return alert('游客不可留言！');
+            if (!currentUser.isLogin) {
+                alert('请先登录！');
+                openModal(loginModal);
+                return;
+            }
+            
             const content = messageInput.value.trim();
             if (!content) return alert('请输入留言内容！');
             
-            const messageListData = JSON.parse(localStorage.getItem('classMessageList'));
-            messageListData.push({
+            const messageList = JSON.parse(localStorage.getItem('classMessageList'));
+            messageList.push({
                 name: currentUser.name,
                 content,
                 time: new Date().toLocaleDateString()
             });
-            localStorage.setItem('classMessageList', JSON.stringify(messageListData));
             
+            localStorage.setItem('classMessageList', JSON.stringify(messageList));
             messageInput.value = '';
             renderMessageList();
+            alert('留言发送成功！');
         });
 
-        // 渲染留言列表
-        function renderMessageList() {
-            const messageListData = JSON.parse(localStorage.getItem('classMessageList'));
-            messageList.innerHTML = messageListData.map(item => `
-                <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="flex justify-between">
-                        <span class="font-medium">${item.name}</span>
-                        <span class="text-gray-400 text-sm">${item.time}</span>
-                    </div>
-                    <p class="text-gray-600 mt-1">${item.content}</p>
-                </div>
-            `).join('');
-        }
-
-        // 7. 相册功能（简化版，实际需图片上传/预览）
-        const uploadAlbumBtn = document.getElementById('uploadAlbumBtn');
-        const albumList = document.getElementById('albumList');
-
-        uploadAlbumBtn.addEventListener('click', () => {
-            if (!currentUser.isLogin) return alert('请先登录！');
-            if (currentUser.name === '游客') return alert('游客不可上传相册！');
-            alert('相册上传功能暂需后端支持，已模拟提交审核申请！');
-            // 实际项目中需实现图片选择、预览、上传审核逻辑
-        });
-
-        // 渲染相册列表
-        function renderAlbumList() {
-            const albumListData = JSON.parse(localStorage.getItem('classAlbumList'));
-            if (albumListData.length === 0) {
-                albumList.innerHTML = '<div class="text-gray-400 text-center py-8 col-span-full">暂无审核通过的相册图片</div>';
-                return;
-            }
-            // 实际项目中需渲染图片预览
-            albumList.innerHTML = albumListData.map(item => `
-                <div class="border border-gray-200 rounded-lg overflow-hidden">
-                    <img src="${item.url}" alt="${item.name}" class="w-full h-40 object-cover">
-                    <p class="p-2 text-center text-sm">${item.name}</p>
-                </div>
-            `).join('');
-        }
-
-        // 8. 音乐播放器功能（完整实现）
-        let currentSongIndex = 0;
-        let audio = new Audio();
-        let isPlaying = false;
-        let lyricIndex = 0;
-
+        // 8. 音乐播放器功能实现
         const playPause = document.getElementById('playPause');
         const playPauseIcon = document.getElementById('playPauseIcon');
         const prevSong = document.getElementById('prevSong');
         const nextSong = document.getElementById('nextSong');
-        const currentSongTitle = document.getElementById('currentSongTitle');
-        const currentSongSinger = document.getElementById('currentSongSinger');
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
         const currentTime = document.getElementById('currentTime');
@@ -940,25 +936,53 @@
         const volumeBar = document.getElementById('volumeBar');
         const volumeFill = document.getElementById('volumeFill');
         const volumeIcon = document.getElementById('volumeIcon');
+        const currentSongTitle = document.getElementById('currentSongTitle');
+        const currentSongSinger = document.getElementById('currentSongSinger');
 
         // 初始化播放器
         function initPlayer() {
             loadSong(currentSongIndex);
+            audio.volume = 0.7;
+            
             // 播放/暂停
             playPause.addEventListener('click', togglePlay);
+            
             // 上一曲/下一曲
-            prevSong.addEventListener('click', () => changeSong(-1));
-            nextSong.addEventListener('click', () => changeSong(1));
+            prevSong.addEventListener('click', () => {
+                currentSongIndex = (currentSongIndex - 1 + songList.length) % songList.length;
+                loadSong(currentSongIndex);
+                if (isPlaying) audio.play();
+            });
+            
+            nextSong.addEventListener('click', () => {
+                currentSongIndex = (currentSongIndex + 1) % songList.length;
+                loadSong(currentSongIndex);
+                if (isPlaying) audio.play();
+            });
+            
             // 进度条点击
-            progressBar.addEventListener('click', setProgress);
+            progressBar.addEventListener('click', (e) => {
+                const progress = e.offsetX / progressBar.offsetWidth;
+                audio.currentTime = progress * audio.duration;
+            });
+            
             // 音量调节
-            volumeBar.addEventListener('click', setVolume);
+            volumeBar.addEventListener('click', (e) => {
+                const volume = e.offsetX / volumeBar.offsetWidth;
+                audio.volume = volume;
+                volumeFill.style.width = `${volume * 100}%`;
+                updateVolumeIcon();
+            });
+            
             // 音频事件监听
             audio.addEventListener('timeupdate', updateProgress);
-            audio.addEventListener('ended', () => changeSong(1));
-            audio.addEventListener('loadedmetadata', () => {
-                totalTime.textContent = formatTime(audio.duration);
+            audio.addEventListener('loadedmetadata', updateTotalTime);
+            audio.addEventListener('ended', () => {
+                nextSong.click();
             });
+            
+            // 歌词弹窗
+            audio.addEventListener('timeupdate', showLyric);
         }
 
         // 加载歌曲
@@ -967,7 +991,7 @@
             audio.src = song.url;
             currentSongTitle.textContent = song.title;
             currentSongSinger.textContent = song.singer;
-            lyricIndex = 0;
+            progressFill.style.width = '0%';
         }
 
         // 播放/暂停切换
@@ -980,53 +1004,34 @@
                 audio.play();
                 playPauseIcon.classList.remove('fa-play');
                 playPauseIcon.classList.add('fa-pause');
-                // 歌词展示
-                setInterval(showLyric, 1000);
             }
             isPlaying = !isPlaying;
-        }
-
-        // 切换歌曲
-        function changeSong(direction) {
-            currentSongIndex = (currentSongIndex + direction + songList.length) % songList.length;
-            loadSong(currentSongIndex);
-            if (isPlaying) audio.play();
-        }
-
-        // 格式化时间
-        function formatTime(seconds) {
-            const min = Math.floor(seconds / 60);
-            const sec = Math.floor(seconds % 60);
-            return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
         }
 
         // 更新进度条
         function updateProgress() {
             const progress = (audio.currentTime / audio.duration) * 100;
             progressFill.style.width = `${progress}%`;
-            currentTime.textContent = formatTime(audio.currentTime);
+            
+            // 更新当前时间
+            const minutes = Math.floor(audio.currentTime / 60);
+            const seconds = Math.floor(audio.currentTime % 60);
+            currentTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
-        // 设置进度
-        function setProgress(e) {
-            const width = progressBar.clientWidth;
-            const clickX = e.offsetX;
-            const progress = (clickX / width) * audio.duration;
-            audio.currentTime = progress;
+        // 更新总时长
+        function updateTotalTime() {
+            const minutes = Math.floor(audio.duration / 60);
+            const seconds = Math.floor(audio.duration % 60);
+            totalTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
-        // 设置音量
-        function setVolume(e) {
-            const width = volumeBar.clientWidth;
-            const clickX = e.offsetX;
-            const volume = clickX / width;
-            audio.volume = volume;
-            volumeFill.style.width = `${volume * 100}%`;
-            // 更新音量图标
-            if (volume === 0) {
+        // 更新音量图标
+        function updateVolumeIcon() {
+            if (audio.volume === 0) {
                 volumeIcon.classList.remove('fa-volume-up', 'fa-volume-down');
                 volumeIcon.classList.add('fa-volume-mute');
-            } else if (volume < 0.5) {
+            } else if (audio.volume < 0.5) {
                 volumeIcon.classList.remove('fa-volume-up', 'fa-volume-mute');
                 volumeIcon.classList.add('fa-volume-down');
             } else {
@@ -1038,31 +1043,33 @@
         // 显示歌词弹窗
         function showLyric() {
             const song = songList[currentSongIndex];
-            if (lyricIndex >= song.lyric.length) return;
-            const [time, text] = song.lyric[lyricIndex];
-            if (Math.floor(audio.currentTime) === time) {
-                const lyricPopup = document.createElement('div');
-                lyricPopup.className = 'lyric-popup bg-indigo-600 text-white';
-                lyricPopup.textContent = text;
-                document.body.appendChild(lyricPopup);
-                // 随机位置
-                lyricPopup.style.left = `${Math.random() * 80 + 10}%`;
-                // 移除弹窗
-                setTimeout(() => {
-                    lyricPopup.remove();
-                }, 5500);
-                lyricIndex++;
+            const currentTime = Math.floor(audio.currentTime);
+            
+            for (let [time, lyric] of song.lyric) {
+                if (time === currentTime) {
+                    const lyricPopup = document.createElement('div');
+                    lyricPopup.className = 'lyric-popup bg-indigo-600 text-white';
+                    lyricPopup.textContent = lyric;
+                    lyricPopup.style.left = `${Math.random() * 80 + 10}%`;
+                    document.body.appendChild(lyricPopup);
+                    
+                    // 移除弹窗
+                    setTimeout(() => {
+                        document.body.removeChild(lyricPopup);
+                    }, 5500);
+                    break;
+                }
             }
         }
 
+        // 下载文件（模拟）
+        window.downloadFile = function(fileName) {
+            alert(`开始下载：${fileName}`);
+            // 实际项目中需后端支持文件下载
+        };
+
         // 初始化播放器
         initPlayer();
-
-        // 页面加载完成后初始化
-        window.addEventListener('load', () => {
-            // 确保本地存储初始化完成
-            initLocalStorage();
-        });
     </script>
 </body>
 </html>

@@ -1,40 +1,657 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班级群 - 制作人：感悟</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        @tailwind base;
-        @tailwind components;
-        @tailwind utilities;
-        body {
-            overflow-x: hidden;
-            background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            font-family: "Microsoft YaHei", sans-serif;
-            padding-bottom: 120px; /* 为底部播放器预留空间，防止布局重叠 */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>感悟工具箱</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        sakura: '#ffb7c5',
+        sakuraDark: '#ff8fab',
+        lavender: '#c4b5fd',
+        softBg: '#fff7fb',
+        softDarkBg: '#0f0f1a',
+        cardSoft: '#ffffff',
+        cardSoftDark: '#1a1a2e'
+      },
+      transitionProperty: {
+        all: 'all',
+        opacityScale: 'opacity transform'
+      },
+      animation: {
+        'float-slow': 'float 6s ease-in-out infinite',
+        'float-slow-reverse': 'float 6s ease-in-out infinite reverse',
+        'pulse-soft': 'pulse-soft 4s ease-in-out infinite',
+        'glow-slow': 'glow-slow 3s ease-in-out infinite',
+        'slide-up': 'slideUp 0.8s ease-out forwards',
+        'fade-in-slow': 'fadeIn 1s ease-out forwards'
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-12px)' }
+        },
+        'pulse-soft': {
+          '0%, 100%': { opacity: 0.6 },
+          '50%': { opacity: 1 }
+        },
+        'glow-slow': {
+          '0%, 100%': { boxShadow: '0 0 20px rgba(255, 183, 197, 0.25)' },
+          '50%': { boxShadow: '0 0 35px rgba(255, 183, 197, 0.45)' }
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(30px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: 1 }
         }
-        /* 验证模块 */
-        .verify-container {
-            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-        .verify-hidden {
-            opacity: 0;
-            transform: translateY(-100vh);
-            pointer-events: none;
-        }
-        /* 入场动画 */
-        @keyframes page-enter {
-            0% { opacity: 0; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .page-container {
-            animation: page-enter 1.2s ease-out forwards;
-            opacity: 0;
-            display: none;
+      }
+    }
+  }
+}
+</script>
+<style type="text/tailwindcss">
+@layer utilities {
+  .smooth-all { transition: all 0.35s cubic-bezier(0.2, 0, 0.2, 1); }
+  .soft-glow { box-shadow: 0 0 30px rgba(255, 183, 197, 0.25); }
+  .sakura-gradient { background: linear-gradient(135deg, #ffb7c5, #c4b5fd, #ffd1dc); }
+  .sakura-gradient-text { background: linear-gradient(135deg, #ff8fab, #c4b5fd, #ffb7c5); -webkit-background-clip: text; color: transparent; background-clip: text; }
+  .glass-card { background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(18px); border: 1px solid rgba(255, 255, 255, 0.85); }
+  .dark .glass-card { background: rgba(26, 26, 46, 0.72); border-color: rgba(255, 255, 255, 0.06); }
+  .sakura-border { position: relative; overflow: hidden; }
+  .sakura-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #ffb7c5, #c4b5fd, #ffd1dc, #ffb7c5);
+    background-size: 400% 400%;
+    animation: borderFlow 6s ease infinite;
+    z-index: -1;
+  }
+  .sakura-border::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.96), rgba(255,248,250,0.98));
+    z-index: -1;
+  }
+  .dark .sakura-border::after {
+    background: linear-gradient(to bottom, rgba(26,26,46,0.96), rgba(15,15,26,0.98));
+  }
+  .card-hover { transition: transform 0.35s ease, box-shadow 0.35s ease; }
+  .card-hover:hover {
+    transform: translateY(-12px) scale(1.03);
+    box-shadow: 0 22px 45px rgba(255, 183, 197, 0.35);
+  }
+  .text-glow { text-shadow: 0 0 8px rgba(255, 183, 197, 0.8), 0 0 22px rgba(196, 181, 253, 0.6); }
+  .parallax-wrap { position: relative; overflow: hidden; }
+  .parallax-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform 0.4s ease; }
+  .parallax-wrap:hover .parallax-bg { transform: scale(1.08); }
+  .ripple { position: relative; overflow: hidden; }
+  .ripple::before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+  }
+  .ripple:active::before { width: 400px; height: 400px; }
+}
+@keyframes borderFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui}
+body{min-height:100vh;background:#fff8fb;overflow-x:hidden}
+.dark body{background:#0f0f1a}
+/* 全屏唯美入场 */
+.intro-mask {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+  z-index: 9999999;
+  animation: introSlideOut 1.8s ease-in 5.5s forwards;
+}
+.intro-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.intro-title {
+  font-size: 5.5rem;
+  font-weight: 900;
+  color: #ffb7c5;
+  text-shadow: 0 0 15px #ff8fab, 0 0 35px #c4b5fd;
+  opacity: 0;
+  animation: titleSoftPop 1.5s ease-out 0.8s forwards;
+}
+.intro-sub {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  color: lavender;
+  opacity: 0;
+  animation: fadeIn 1s ease-out 2.3s forwards;
+}
+.intro-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 180px;
+  height: 180px;
+  border: 2px solid rgba(255, 183, 197, 0.55);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: softExpand 1.8s ease-out forwards;
+}
+.intro-circle-2 {
+  width: 260px;
+  height: 260px;
+  animation-delay: 0.6s;
+  border-color: rgba(196, 181, 253, 0.35);
+}
+.intro-circle-3 {
+  width: 340px;
+  height: 340px;
+  animation-delay: 1.2s;
+  border-color: rgba(255, 209, 0.25);
+}
+@keyframes softExpand {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+@keyframes titleSoftPop {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+@keyframes introSlideOut {
+  to { transform: translateY(-120vh); visibility:hidden; }
+}
+.toast{
+  animation: toastIn 0.25s ease-out;
+}
+@keyframes toastIn{
+  from{opacity:0;transform:translateX(30px)}
+  to{opacity:1;transform:translateX(0)}
+}
+</style>
+</head>
+<body>
+<!-- 入场动画遮罩 -->
+<div class="intro-mask">
+  <div class="intro-circle intro-circle-3"></div>
+  <div class="intro-circle intro-circle-2"></div>
+  <div class="intro-circle"></div>
+  <div class="intro-center">
+    <h1 class="intro-title">感悟工具箱</h1>
+    <p class="intro-sub">温柔樱花 · 随心工具</p>
+  </div>
+</div>
+<!-- 背景画布元素 -->
+<canvas id="sakuraCanvas"></canvas>
+<div id="softLight"></div>
+<canvas id="bgParticles"></canvas>
+<!-- 消息弹窗 -->
+<div id="toastBox" class="fixed top-8 right-8 z-50 flex flex-col gap-3"></div>
+<!-- 作者感悟弹窗 -->
+<div id="thoughtModal" class="fixed inset-0 bg-black/50 z-40 hidden flex items-center justify-center p-4">
+  <div class="w-full max-w-3xl rounded-3xl p-8 sakura-border modal-enter bg-cardSoft dark:cardSoftDark max-h-[85vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-3xl font-bold text-sakura text-glow">作者感悟</h2>
+      <button id="closeModal" class="text-2xl w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 smooth-all hover:bg-sakura/20 dark:hover:bg-sakura/10">✕</button>
+    </div>
+    <div class="text-slate-700 dark:text-slate-300 text-lg space-y-5 leading-relaxed">
+      <p>正在努力制作，不要催我了啊</p>
+      <p>感悟工具箱——希望用温柔的界面、轻柔的音乐、飘落的樱花，让每次打开都不只是使用工具，而是一次短暂的放松。</p>
+      <p class="text-sm text-slate-400 mt-8">持续更新ing</p>
+    </div>
+  </div>
+</div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 relative z-10">
+  <!-- 顶部导航 -->
+  <header class="flex justify-between items-center mb-16">
+    <div>
+      <h1 class="text-[clamp(2.2rem,5vw,3.2rem)] font-bold text-slate-800 dark:text-white text-glow">感悟工具箱</h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-3">感悟牛逼！！！</p>
+    </div>
+    <div class="flex gap-4 items-center">
+      <button id="openThoughtBtn" class="px-5 py-3 rounded-xl bg-gradient-to-r from-sakura to-lavender text-white soft-glow smooth-all hover:shadow-lg">
+        作者感悟
+      </button>
+      <button id="darkToggle" class="w-12 h-12 rounded-full bg-cardSoft dark:cardSoft flex items-center justify-center text-xl smooth-all hover:shadow-lg">
+        <span class="dark:hidden">☾</span>
+        <span class="hidden dark:block">☀</span>
+      </button>
+    </div>
+  </header>
+  <!-- 作者感悟醒目区块 -->
+  <section class="rounded-3xl p-10 mb-16 sakura-border">
+    <div class="flex items-start justify-between gap-6 flex-col md:flex-row">
+      <div class="flex-1">
+        <h2 class="text-3xl font-bold sakura-gradient-text mb-4">作者感悟速览</h2>
+        <p class="text-slate-700 dark:text-slate-300 text-lg leading-relaxed">
+          不处！！！！！！！！！
+        </p>
+      </div>
+      <button id="openThoughtBtn2" class="shrink-0 px-6 py-3 rounded-xl bg-gradient-to-r from-sakura to-lavender text-white soft-glow smooth-all hover:shadow-lg">
+        查看完整感悟
+      </button>
+    </div>
+  </section>
+  <!-- 工具区域标题 -->
+  <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-10">全部工具（20个预留位）</h2>
+  <!-- 20个工具卡片网格 -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+    <!-- 工具1 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('二维码生成器.html')">
+      <div class="parallax-wrap">
+        <img src="C.jpg" alt="工具1配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">二维码生成器</h3>
+      </div>
+    </div>
+    <!-- 工具2 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('解压器.html')">
+      <div class="parallax-wrap">
+        <img src="a.jpg" alt="工具2配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">解压器</h3>
+      </div>
+    </div>
+    <!-- 工具3 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('压缩器.html')">
+      <div class="parallax-wrap">
+        <img src="s.jpg" alt="工具3配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">压缩器</h3>
+      </div>
+    </div>
+    <!-- 工具4 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('游戏重名.html')">
+      <div class="parallax-wrap">
+        <img src="d.png" alt="工具4配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">游戏重名</h3>
+      </div>
+    </div>
+    <!-- 工具5 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('转化工具.html')">
+      <div class="parallax-wrap">
+        <img src="f.jpg" alt="工具5配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">转化工具</h3>
+      </div>
+    </div>
+    <!-- 工具6 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('转盘.html')">
+      <div class="parallax-wrap">
+        <img src="g.webp" alt="工具6配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">转盘</h3>
+      </div>
+    </div>
+    <!-- 工具7 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool7.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool7.png" alt="工具7配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具七名称</h3>
+      </div>
+    </div>
+    <!-- 工具8 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool8.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool8.png" alt="工具8配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具八名称</h3>
+      </div>
+    </div>
+    <!-- 工具9 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool9.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool9.png" alt="工具9配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具九名称</h3>
+      </div>
+    </div>
+    <!-- 工具10 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool10.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool10.png" alt="工具10配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十名称</h3>
+      </div>
+    </div>
+    <!-- 工具11 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool11.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool11.png" alt="工具11配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十一名称</h3>
+      </div>
+    </div>
+    <!-- 工具12 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool12.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool12.png" alt="工具12配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十二名称</h3>
+      </div>
+    </div>
+    <!-- 工具13 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool13.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool13.png" alt="工具13配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十三名称</h3>
+      </div>
+    </div>
+    <!-- 工具14 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool14.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool14.png" alt="工具14配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十四名称</h3>
+      </div>
+    </div>
+    <!-- 工具15 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool15.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool15.png" alt="工具15配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十五名称</h3>
+      </div>
+    </div>
+    <!-- 工具16 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool16.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool16.png" alt="工具16配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十六名称</h3>
+      </div>
+    </div>
+    <!-- 工具17 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool17.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool17.png" alt="工具17配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十七名称</h3>
+      </div>
+    </div>
+    <!-- 工具18 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool18.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool18.png" alt="工具18配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十八名称</h3>
+      </div>
+    </div>
+    <!-- 工具19 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool19.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool19.png" alt="工具19配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十九名称</h3>
+      </div>
+    </div>
+    <!-- 工具20 -->
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool20.html')">
+      <div class="parallax-wrap">
+        <img src="img/tool20.png" alt="工具20配图" class="w-full h-48 object-cover rounded-t-2xl">
+      </div>
+      <div class="p-5">
+        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具二十名称</h3>
+      </div>
+    </div>
+  </div>
+  <!-- 底部 -->
+  <footer class="mt-24 text-center text-slate-500 dark:text-slate-400 py-6 border-t border-slate-800">
+   作者未享福，持续更新ing
+  </footer>
+</div>
+<!-- 音频标签 -->
+<audio id="bgAudio">
+<script>
+// ====================== 入场动画控制：访问过页面直接隐藏开场动画 ======================
+const introMask = document.querySelector('.intro-mask');
+if(localStorage.getItem('hasVisited')){
+  introMask.style.display = 'none';
+}else{
+  localStorage.setItem('hasVisited', '1');
+}
+
+// ====================== 自动随机播放音乐，修复播放报错BUG ======================
+const audio = document.getElementById('bgAudio');
+audio.volume = 0.6;
+// 歌曲列表
+const songData = [
+  {name:"红色高跟鞋",src:"1.mp3"},
+  {name:"晴天",src:"qing tian.mp3"},
+  {name:"花海",src:"hua hai.mp3"},
+  {name:"还是分开",src:"hai shi fen kai.mp3"},
+  {name:"我记得",src:"wo ji de.mp3"},
+];
+let currentSongIndex = 0;
+let audioPlayed = false;
+
+// 切换歌曲
+function switchSong(idx){
+  currentSongIndex = idx;
+  audio.src = songData[idx].src;
+  // 捕获播放报错，消除控制台BUG
+  audio.play().then(()=>{
+    audioPlayed = true;
+  }).catch(err=>{
+    console.log("浏览器自动播放限制，点击页面任意位置开启音乐");
+  });
+}
+
+// 页面加载完成随机选歌
+window.addEventListener('load',()=>{
+  const randomIdx = Math.floor(Math.random() * songData.length);
+  switchSong(randomIdx);
+});
+
+// 用户点击页面任意位置解锁播放（解决浏览器拦截BUG）
+document.body.addEventListener('click',()=>{
+  if(!audioPlayed){
+    audio.play().then(()=>audioPlayed=true).catch(e=>{});
+  }
+})
+
+// 播放结束自动随机换一首（不重复当前）
+audio.addEventListener('ended',()=>{
+  let newIdx;
+  do{
+    newIdx = Math.floor(Math.random() * songData.length);
+  }while(newIdx === currentSongIndex);
+  switchSong(newIdx);
+});
+
+// ====================== 页面原有基础功能完全保留 ======================
+const darkToggle=document.getElementById('darkToggle');
+const thoughtModal=document.getElementById('thoughtModal');
+const openThoughtBtn=document.getElementById('openThoughtBtn');
+const openThoughtBtn2=document.getElementById('openThoughtBtn2');
+const closeModal=document.getElementById('closeModal');
+const toastBox=document.getElementById('toastBox');
+// 深色模式
+if (localStorage.getItem('dark') === '1' || (!localStorage.getItem('dark') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.documentElement.classList.add('dark');
+}
+darkToggle.onclick = () => {
+  document.documentElement.classList.toggle('dark');
+  localStorage.setItem('dark', document.documentElement.classList.contains('dark') ? '1' : '0');
+};
+// 作者感悟弹窗
+function openThought() {
+  thoughtModal.classList.remove('hidden');
+}
+openThoughtBtn.onclick = openThought;
+openThoughtBtn2.onclick = openThought;
+closeModal.onclick = () => thoughtModal.classList.add('hidden');
+thoughtModal.onclick = e => {
+  if (e.target === thoughtModal) thoughtModal.classList.add('hidden');
+};
+// Toast提示
+function showToast(text) {
+  const div = document.createElement('div');
+  div.className = 'px-5 py-4 rounded-lg sakura-gradient text-white toast';
+  div.innerText = text;
+  toastBox.appendChild(div);
+  setTimeout(() => div.remove(), 2400);
+}
+// 跳转工具
+function openFile(fileName) {
+  location.href = fileName;
+}
+// ====================== 鼠标柔光跟随 ======================
+const softLight = document.getElementById('softLight');
+softLight.style.cssText=`
+  position: fixed;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 183, 197, 0.18), transparent 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  transition: 0.1s ease;
+`;
+document.addEventListener('mousemove', e => {
+  softLight.style.left = e.clientX + 'px';
+  softLight.style.top = e.clientY + 'px';
+});
+// ====================== 背景粒子 ======================
+const bgCanvas = document.getElementById('bgParticles');
+const bgCtx = bgCanvas.getContext('2d');
+let bgW, bgH, bgParticles = [];
+function resizeBgCanvas() {
+  bgW = window.innerWidth;
+  bgH = window.innerHeight;
+  bgCanvas.width = bgW;
+  bgCanvas.height = bgH;
+  bgCanvas.style=`position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.45`;
+}
+resizeBgCanvas();
+window.addEventListener('resize', resizeBgCanvas);
+class BgParticle {
+  constructor() {
+    this.x = Math.random() * bgW;
+    this.y = Math.random() * bgH;
+    this.r = Math.random() * 2.2 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.6;
+    this.speedY = (Math.random() - 0.6);
+    this.opacity = Math.random() * 0.35 + 0.08;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x < 0 || this.x > bgW) this.speedX *= -1;
+    if (this.y < 0 || this.y > bgH) this.speedY *= -1;
+  }
+  draw() {
+    bgCtx.beginPath();
+    bgCtx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    bgCtx.fillStyle = `rgba(196, 181, 253, ${this.opacity})`;
+    bgCtx.fill();
+  }
+}
+for (let i = 0; i < 60; i++) bgParticles.push(new BgParticle());
+function animateBgParticles() {
+  bgCtx.clearRect(0, 0, bgW, bgH);
+  bgParticles.forEach(p => {p.update();p.draw();});
+  requestAnimationFrame(animateBgParticles);
+}
+animateBgParticles();
+// ====================== Canvas樱花飘落 ======================
+const sakuraCanvas = document.getElementById('sakuraCanvas');
+const sakuraCtx = sakuraCanvas.getContext('2d');
+let sakuraW, sakuraH, sakuras = [];
+function resizeSakuraCanvas() {
+  sakuraW = window.innerWidth;
+  sakuraH = window.innerHeight;
+  sakuraCanvas.width = sakuraW;
+  sakuraCanvas.height = sakuraH;
+  sakuraCanvas.style=`position:fixed;inset:0;pointer-events:none;z-index:1`;
+}
+resizeSakuraCanvas();
+window.addEventListener('resize', resizeSakuraCanvas);
+class Sakura {
+  constructor() {
+    this.x = Math.random() * sakuraW;
+    this.y = Math.random() * sakuraH;
+    this.size = Math.random() * 14 + 10;
+    this.speedY = Math.random() * 1.2 + 0.6;
+    this.speedX = (Math.random() - 0.8);
+    this.rotate = Math.random() * Math.PI * 2;
+    this.speedRotate = (Math.random() - 0.5) * 0.015;
+    this.opacity = Math.random() * 0.5 + 0.35;
+  }
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX;
+    this.rotate += this.speedRotate;
+    if (this.y > sakuraH + 20) {
+      this.y = -20;
+      this.x = Math.random() * sakuraW;
+    }
+  }
+  draw() {
+    sakuraCtx.save();
+    sakuraCtx.translate(this.x, this.y);
+    sakuraCtx.rotate(this.rotate);
+    sakuraCtx.beginPath();
+    sakuraCtx.fillStyle = `rgba(255, 183, 197, ${this.opacity})`;
+    sakuraCtx.moveTo(0, -this.size / 2);
+    sakuraCtx.bezierCurveTo(this.size / 2, -this.size / 4, this.size / 4, 0, 0, this.size / 2);
+    sakuraCtx.bezierCurveTo(-this.size / 2, this.size / 4, -this.size / 4, 0, 0, -this.size / 2);
+    sakuraCtx.fill();
+    sakuraCtx.restore();
+  }
+}
+for (let i = 0; i < 45; i++) sakuras.push(new Sakura());
+function animateSakura() {
+  sakuraCtx.clearRect(0, 0, sakuraW, sakuraH);
+  sakuras.forEach(s => {s.update();s.draw();});
+  requestAnimationFrame(animateSakura);
+}
+animateSakura();
+</script>
+</body>
+</html>            display: none;
             max-width: 1200px;
             margin: 0 auto; /* 居中布局，防止左右溢出 */
         }

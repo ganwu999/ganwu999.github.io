@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<style>
+.drag-area{border:2px dashed #6366f1;transition:0.2s}
+.drag-area.active{background:#eef2ff;border-color:#4f46e5}
+.item-card{transition:0.2s}
+.item-card:hover{transform:scale(1.01)}
+input[type="range"]::-webkit-slider-thumb{background:#60a5fa}
+/* 入场动画 */
+.anim-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #080812;
+  z-index: 9999;
+  animation: maskSlideLeft 1.2s linear 4.2s forwards;
+}
+@keyframes maskSlideLeft {
+  to { transform: translateX(-100vw); }
+}
+.ring-box {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  border: 2px solid #60a5fa;
+  border-radius: 50%;
+  opacity: 0;
+}
+.ring-center {
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: centerRing 1.2s ease-out forwards;
+}
+@keyframes centerRing {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.r1 { width: 80px; height: 80px; animation: r1Move 1.8s ease-out 1.2s forwards; }
+.r2 { width: 60px; height: 60px; animation: r2Move 1.8s ease-out 1.2s forwards; }
+.r3 { width: 100px; height: 100px; animation: r3Move 1.8s ease-out 1.2s forwards; }
+.r4 { width: 70px; height: 70px; animation: r4Move 1.8s ease-out 1.2s forwards; }
+@keyframes r1Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:15%;left:20%;transform:translate(-50%,-50%) scale(0.8);opacity:0.7; }
+}
+@keyframes r2Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:75%;left:80%;transform:translate(-50%,-50%) scale(0.6);opacity:0.5; }
+}
+@keyframes r3Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:20%;left:78%;transform:translate(-50%,-50%) scale(0.9);opacity:0.6; }
+}
+@keyframes r4Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:80%;left:18%;transform:translate(-50%,-50%) scale(0.7);opacity:0.4; }
+}
+.text-ganwu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 5rem;
+  color: #e0efff;
+  font-weight: bold;
+  transform: translate(-50%, -50%) scale(0.1);
+  opacity: 0;
+  animation: textIn 1.2s ease-out 3s forwards;
+}
+@keyframes textIn {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.progress-wrap{display:none;margin:1rem 0}
+.progress-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.progress-inner{height:100%;background:#6366f1;transition:0.1s width}
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8">
+<div class="max-w-6xl mx-auto">
+  <header class="text-center mb-8">
+    <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-indigo-600">断崖式极限压缩器</h1>
+    <p class="text-slate-500 mt-2">纯色消像素｜静态视频帧｜循环压榨，体积断崖暴跌</p>
+  </div>
+  <div class="bg-white rounded-xl shadow p-5 mb-6 grid md:grid-cols-8 gap-4">
+    <div>
+      <label class="block font-medium mb-2">处理类型</label>
+      <select id="handleType" class="w-full border rounded px-3 py-2">
+        <option value="media">图片/视频压缩</option>
+        <option value="zip">文件打包</option>
+      </select>
+    </div>
+    <div>
+      <label class="block font-medium mb-2">输出格式</label>
+      <select id="outFormat" class="w-full border rounded px-3 py-2">
+        <optgroup label="极限图片">
+          <option value="avif" selected>AVIF(最小)</option>
+          <option value="webp">WebP</option>
+          <option value="jpeg">JPG</option>
+        </optgroup>
+        <optgroup label="极限视频">
+          <option value="webm" selected>WebM VP9</option>
+          <option value="mp4">MP4</option>
+        </optgroup>
+      </select>
+    </div>
+    <div>
+      <label class="block font-medium mb-2">画质(0极致)<span id="qualityTip" class="text-indigo-50 ml-2">0</span></label>
+      <input type="range" id="qualitySlider" min="0" max="100" value="0" class="w-full mt-2">
+    </div>
+    <div>
+      <label class="block font-medium mb-2">最小宽高</label>
+      <div class="flex gap-2">
+        <input type="number" id="minW" min="1" value="1" class="w-1/2 border rounded px-2 py-2">
+        <input type="number" id="minH" min="1" value="1" class="w-1/2 border rounded px-2">
+      </div>
+    </div>
+    <div>
+      <label class="block font-medium mb-2">压缩轮次</label>
+      <input id="loopNum" type="number" min="1" value="25" class="w-full border rounded px-3 py-2">
+    </div>
+    <div>
+      <label class="block font-medium mb-2">纯色消像素</label>
+      <input type="checkbox" id="solidMode" checked class="w-4 h-4 mt-2">
+    </div>
+    <div>
+      <label class="block font-medium mb-2">视频仅首帧</label>
+      <input type="checkbox" id="staticVid" checked class="w-4 h-4 mt-2">
+    </div>
+    <div class="flex items-end">
+      <button id="maxCrush" class="bg-red-600 text-white w-full py-2 rounded">一键拉满极限</button>
+    </div>
+  </div>
+  <div id="dragBox" class="drag-area rounded-xl p-10 text-center bg-white mb-6 cursor-pointer">
+    <svg class="w-14 h-14 mx-auto text-indigo-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+    </svg>
+    <p class="text-lg font-medium">拖拽图片/视频上传</p>
+    <p class="text-slate-400 text-sm mt-1">开启纯色/静态帧，压缩体积断崖下跌</p>
+    <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden">
+  </div>
+  <div class="flex flex-wrap gap-3 mb-6">
+    <button id="compressAll" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">批量压榨</button>
+    <button id="downloadZip" class="bg-emerald-500 text-white px-5 py-2 rounded-lg font-medium transition hidden">打包全部</button>
+    <button id="clearAll" class="bg-slate-300 px-5 py-2 rounded-lg font-medium hover:bg-slate-400 transition">清空</button>
+  </div>
+  <div class="progress-wrap" id="progressWrap">
+    <p id="progressText" class="text-sm text-slate-600 mb-2">进度：0%</p>
+    <div class="progress-bar">
+      <div class="progress-inner" id="progressInner" style="width:0%"></div>
+    </div>
+  </div>
+  <div id="fileList" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+</div>
+<div class="anim-mask">
+  <div class="ring-box">
+    <div class="ring ring-center"></div>
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="ring r4"></div>
+  </div>
+  <div class="text-ganwu">感悟</div>
+</div>
+<script>
+const fileArr = [];
+const compressedArr = [];
+const dragBox = document.getElementById('dragBox');
+const fileInput = document.getElementById('fileInput');
+const handleType = document.getElementById('handleType');
+const qualitySlider = document.getElementById('qualitySlider');
+const qualityTip = document.getElementById('qualityTip');
+const loopNum = document.getElementById('loopNum');
+const minW = document.getElementById('minW');
+const minH = document.getElementById('minH');
+const outFormat = document.getElementById('outFormat');
+const solidMode = document.getElementById('solidMode');
+const staticVid = document.getElementById('staticVid');
+const maxCrush = document.getElementById('maxCrush');
+const fileList = document.getElementById('fileList');
+const compressAll = document.getElementById('compressAll');
+const downloadZip = document.getElementById('downloadZip');
+const clearAll = document.getElementById('clearAll');
+const progressWrap = document.getElementById('progressWrap');
+const progressText = document.getElementById('progressText');
+const progressInner = document.getElementById('progressInner');
+
+qualitySlider.oninput = () => qualityTip.textContent = qualitySlider.value + "档";
+maxCrush.onclick = () => {
+  qualitySlider.value = 0; qualityTip.textContent = "0档";
+  loopNum.value = 25; minW.value = 1; minH.value = 1;
+  solidMode.checked = true; staticVid.checked = true;
+  outFormat.value = "avif"; alert("已开启断崖压缩：纯色+1像素+25轮+静态视频帧");
+};
+
+function setProgress(p, t) {
+  progressWrap.style.display = "block";
+  progressInner.style.width = Math.max(0, Math.min(100, p)) + "%";
+  progressText.innerText = t;
+}
+function hideProgress() { setTimeout(() => {progressWrap.style.display = "none"; progressInner.style.width = "0%"},1200); }
+
+dragBox.ondragover = e=>e.preventDefault()||dragBox.classList.add("active");
+dragBox.ondragleave = ()=>dragBox.classList.remove("active");
+dragBox.ondrop = e=>{e.preventDefault();dragBox.classList.remove("active");handleFiles(e.dataTransfer.files)};
+dragBox.onclick = ()=>fileInput.click();
+fileInput.onchange = ()=>handleFiles(fileInput.files);
+
+function handleFiles(files) {
+  for(let f of files) {
+    if(!fileArr.find(x=>x.file.name===f.name&&x.file.size)) fileArr.push({file:f,blob:null,done:false});
+  }
+  renderList();
+}
+function renderList() {
+  fileList.innerHTML = "";
+  fileArr.forEach((item,idx)=>{
+    const oriKb = (item.file.size/1024).toFixed(3);
+    const newKb = item.done ? (item.blob.size/1024).toFixed(4) : "待压";
+    let pre = "";
+    if(item.file.type.startsWith("image")) pre = `<img class="w-full h-36 object-contain bg-slate-100" src="${URL.createObjectURL(item.file)}">`;
+    else pre = `<video class="w-full h-36 object-contain bg-slate-100" src="${URL.createObjectURL(item.file)}" muted controls></video>`;
+    const div = document.createElement("div");
+    div.className = "item-card bg-white rounded-lg shadow p-4";
+    div.innerHTML = `${pre}<p class="font-medium text-sm mt-2 truncate">${item.file.name}</p><p class="text-xs mt-1 text-slate-500">原始${oriKb}KB → 压缩${newKb}KB</p>
+    <div class="flex gap-2 mt-3">
+      <button data-id="${idx}" class="single-compress bg-indigo-100 text-indigo-600 text-sm px-2 py-1 rounded">单独压榨</button>
+      ${item.done?`<button data-id="${idx}" class="down-single bg-emerald-100 text-sm px-2 py-1 rounded">下载</button>`:""}
+      <button data-id="${idx}" class="del bg-red-100 text-sm px-2 py-1 rounded">删除</button>
+    </div>`;
+    fileList.appendChild(div);
+  });
+  document.querySelectorAll(".single-compress").forEach(b=>b.onclick=()=>compressOne(+b.dataset.id,fileArr.length));
+  document.querySelectorAll(".down-single").forEach(b=>b.onclick=()=>downloadOne(+b.dataset.id));
+  document.querySelectorAll(".del").forEach(b=>{
+    const i = +b.dataset.id; b.onclick=()=>{fileArr.splice(i,1);renderList();toggleZip()}
+  });
+  toggleZip();
+}
+function toggleZip() { downloadZip.classList.toggle("hidden",!fileArr.some(x=>x.done)) }
+
+// 图片核心断崖压缩：读取画面均值，直接填充纯色，删除全部像素细节
+async function crushImage(rawBlob, fmt, q, wMax, hMax) {
+  return new Promise(res=>{
+    const url = URL.createObjectURL(rawBlob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = Math.max(Math.floor(img.width/2), wMax);
+      let h = Math.max(Math.floor(img.height/2), hMax);
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img,0,0,w,h);
+      // 取整张图平均色，填充纯色，彻底消除纹理
+      const imgData = ctx.getImageData(0,0,w,h);
+      let r=0,g=0,b=0;
+      for(let i=0;i<imgData.data.length;i+=4){
+        r+=imgData.data[i];g+=imgData[i+1];b+=imgData[i+2];
+      }
+      const len = imgData.data.length/4;
+      const avgR = Math.floor(r/len);
+      const avgG = Math.floor(g/len);
+      const avgB = Math.floor(b/len);
+      ctx.fillStyle = `rgb(${avgR},${avgG},${avgB})`;
+      ctx.fillRect(0,0,w,h);
+      // 最低编码质量
+      const quality = q<=0 ? 0.001 : q/100;
+      c.toBlob(b=>res(b),`image/${fmt}`,quality);
+    };
+    img.onerror = res(rawBlob);
+    img.src = url;
+  })
+}
+
+// 视频断崖压缩：仅截取首帧生成静态画面视频，删除所有动态帧+音频
+async function crushVideo(rawBlob, fmt, q) {
+  return new Promise(res=>{
+    const url = URL.createObjectURL(rawBlob);
+    const vid = document.createElement("video");
+    vid.muted = true;
+    vid.currentTime = 0; // 只取第一帧
+    vid.onloadeddata = async () => {
+      // 画布提取首帧纯色
+      const c = document.createElement("canvas");
+      c.width = Math.max(Math.floor(vid.videoWidth/2),1);
+      c.height = Math.max(Math.floor(vid.videoHeight/2),1);
+      const ctx = c.getContext("2d");
+      ctx.drawImage(vid,0,0,c.width,c.height);
+      const imgData = ctx.getImageData(0,0,c.width,c.height);
+      let r=0,g=0,b=0;
+      for(let i=0;i<imgData.data.length;i+=4){r+=imgData[i];g+=imgData[i+1];b+=imgData[i+2]}
+      const l = imgData.data.length/4;
+      ctx.fillStyle = `rgb(${Math.floor(r/l)},${Math.floor(g/l)},${Math.floor(b/l)})`;
+      ctx.fillRect(0,0,c.width,c.height);
+      // 生成静态图片blob，转成极短视频
+      const imgBlob = await new Promise(r=>c.toBlob(r,`image/webp`,0.001));
+      // 无动态，只用静态图生成极小视频
+      const stream = c.captureStream(1);
+      stream.getAudioTracks().forEach(t=>stream.removeTrack(t));
+      const mime = fmt==="webm"?"video/webm;codecs=vp9":"video/mp4";
+      const rec = new MediaRecorder(stream,{mimeType,videoBitsPerSecond:300000});
+      const chunks = [];
+      rec.ondataavailable = e=>chunks.push(e.data);
+      rec.onstop = ()=>res(new Blob(chunks,{type:mime}));
+      rec.start();
+      setTimeout(()=>rec.stop(),400);
+    };
+    vid.onerror = res(rawBlob);
+    vid.src = url;
+  })
+}
+
+async function compressOne(idx, total) {
+  const item = fileArr[idx];
+  const mode = handleType.value;
+  const q = +qualitySlider.value;
+  const loop = +loopNum.value;
+  const fmt = outFormat.value;
+  const mw = +minW.value;
+  const mh = +minH;
+  let blob = item.file;
+  const base = (idx/total)*100;
+  setProgress(base, `处理${item.file.name}`);
+  if(mode==="media"){
+    if(item.file.type.startsWith("image")){
+      for(let i=0;i<loop;i++){
+        blob = await crushImage(blob,fmt,q,mw,mh);
+        setProgress(base + (i/loop)*(100/total),`第${i+1}轮纯色压缩`);
+      }
+    }else{
+      for(let i=0;i<loop;i++){
+        blob = await crushVideo(blob,fmt,q);
+        setProgress(base + (i/loop)*(100/total),`第${i+1}轮静态帧压缩`);
+      }
+    }
+  }else{
+    const zip = new JSZip(); zip.file(item.file.name,blob);
+    blob = await zip.generateAsync({compressionLevel:9,type:"blob"});
+  }
+  item.blob = blob; item.done = true; compressedArr[idx] = blob; renderList();
+  setProgress(((idx+1)/total)*100,`${item.file.name}压榨完成`);
+}
+
+compressAll.onclick = async () => {
+  if(fileArr.length===0) return alert("先上传文件");
+  const lp = +loopNum.value;
+  if(lp<1) return alert("轮次≥1");
+  hideProgress();
+  const total = fileArr.length;
+  for(let i=0;i<total;i++) if(!fileArr[i]) await compressOne(i,total);
+  setProgress(100,"全部断崖压缩完成");
+  setTimeout(()=>{hideProgress();alert("图片仅纯色、视频仅静态帧，体积大幅缩小")},1000);
+}
+function downloadOne(idx) {
+  const it = fileArr[idx];
+  const ext = outFormat.value;
+  const name = it.file.name.replace(/\.\w+$/,"."+ext);
+  saveAs(it.blob,name);
+}
+downloadZip.onclick = async () => {
+  const zip = new JSZip();
+  const ext = outFormat.value;
+  fileArr.forEach(it=>{
+    if(it.done) zip.file(it.file.name.replace(/\.\w+$/,"."+ext),it.blob);
+  })
+  const zblob = await zip.generateAsync({compressionLevel:9,type:"blob"});
+  saveAs(zblob,"极限压缩包.zip");
+}
+clearAll.onclick = () => {fileArr.length=0;compressedArr.length=0;fileList.innerHTML="";hideProgress();toggleZip()}
+</script>
+</body>
+</html>

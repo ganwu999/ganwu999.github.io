@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.8.10/umd/fflate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/unrar-wasm@0.1.4/dist/unrar-wasm.js"></script>
+<title>解压器-感悟</title>
+<style>
+.drag-box{border:2px dashed #22c55e;transition:0.2s}
+.drag-box.active{background:#f0fdf4;border-color:#16a34a}
+.file-item:hover{background:#f3f4f6}
+/* ===== 统一圆环入场动画全套样式 ===== */
+.anim-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #080812;
+  z-index: 9999;
+  animation: maskSlideLeft 1.2s linear 4.2s forwards;
+}
+@keyframes maskSlideLeft {
+  to { transform: translateX(-100vw); }
+}
+.ring-box {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  border: 2px solid #60a5fa;
+  border-radius: 50%;
+  opacity: 0;
+}
+.ring-center {
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: centerRing 1.2s ease-out forwards;
+}
+@keyframes centerRing {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.r1 { width: 80px; height: 80px; animation: r1Move 1.8s ease-out 1.2s forwards; }
+.r2 { width: 60px; height: 60px; animation: r2Move 1.8s ease-out 1.2s forwards; }
+.r3 { width: 100px; height: 100px; animation: r3Move 1.8s ease-out 1.2s forwards; }
+.r4 { width: 70px; height: 70px; animation: r4Move 1.8s ease-out 1.2s forwards; }
+@keyframes r1Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:15%;left:20%;transform:translate(-50%,-50%) scale(0.8);opacity:0.7; }
+}
+@keyframes r2Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:75%;left:80%;transform:translate(-50%,-50%) scale(0.6);opacity:0.5; }
+}
+@keyframes r3Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:20%;left:78%;transform:translate(-50%,-50%) scale(0.9);opacity:0.6; }
+}
+@keyframes r4Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:80%;left:18%;transform:translate(-50%,-50%) scale(0.7);opacity:0.4; }
+}
+.text-ganwu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 5rem;
+  color: #e0efff;
+  font-weight: bold;
+  transform: translate(-50%, -50%) scale(0.1);
+  opacity: 0;
+  animation: textIn 1.2s ease-out 3s forwards;
+}
+@keyframes textIn {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.progress-wrap{display:none;margin:1rem 0}
+.progress-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.progress-inner{height:100%;background:#10b981;transition:0.1s width}
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8">
+<div class="max-w-5xl mx-auto">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-emerald-600">本地离线解压工具</h1>
+    <p class="text-slate-500 mt-2">支持多等级解压力度 · ZIP/RAR/7Z/TAR/GZ 本地解析</p>
+  </div>
+  <div class="bg-white rounded-xl shadow p-5 mb-6 grid md:grid-cols-2 gap-6">
+    <div>
+      <label class="block font-medium mb-2">全局解压力度（1-10级，数字越大解压越完整）<span id="levelTip">5级均衡</span></label>
+      <input id="globalLevel" type="range" min="1" max="10" value="5" class="w-full mt-2">
+    </div>
+    <div>
+      <label class="block font-medium mb-2">单次最大解压迭代次数</label>
+      <input id="loopNum" type="number" min="1" max="30" value="3" class="w-full border rounded px-3 py-2 mt-2">
+    </div>
+  </div>
+  <div id="dragBox" class="drag-box rounded-xl p-10 text-center bg-white mb-6 cursor-pointer">
+    <svg class="w-14 h-14 mx-auto text-emerald-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+    </svg>
+    <p class="text-lg font-medium">拖拽压缩包到此处</p>
+    <p class="text-slate-400 text-sm mt-1">支持 .zip .rar .7z .tar .gz .tgz，无大小限制</p>
+    <input type="file" id="fileInput" multiple class="hidden" accept=".zip,.rar,.7z,.tar,.gz,.tgz">
+  </div>
+  <div class="flex gap-3 mb-6">
+    <button id="extractAll" class="bg-emerald-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50">全部解压</button>
+    <button id="repackZip" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-600 hidden">打包全部解压文件为ZIP</button>
+    <button id="clear" class="bg-slate-300 px-5 py-2 rounded-lg font-medium hover:bg-slate-400">清空列表</button>
+  </div>
+  <!-- 实时解压进度条 -->
+  <div class="progress-wrap" id="progressWrap">
+    <p id="progressText" class="text-sm text-slate-600 mb-2">解压进度：0%</p>
+    <div class="progress-bar">
+      <div class="progress-inner" id="progressInner" style="width:0%"></div>
+    </div>
+  </div>
+  <h2 class="text-xl font-semibold mb-3">待解压文件详情</h2>
+  <div id="archiveList" class="space-y-4 mb-8"></div>
+  <div id="fileResultWrap" class="hidden">
+    <h2 class="text-xl font-semibold mb-3">解压文件列表</h2>
+    <div id="fileResultList" class="bg-white rounded-lg shadow divide-y max-h-[400px] overflow-auto"></div>
+  </div>
+</div>
+<div class="anim-mask">
+  <div class="ring-box">
+    <div class="ring ring-center"></div>
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="ring r4"></div>
+  </div>
+  <div class="text-ganwu">感悟</div>
+</div>
+<script>
+let archiveFiles = [];
+let extractedAll = new Map();
+const dragBox = document.getElementById('dragBox');
+const fileInput = document.getElementById('fileInput');
+const archiveList = document.getElementById('archiveList');
+const fileResultWrap = document.getElementById('fileResultWrap');
+const fileResultList = document.getElementById('fileResultList');
+const extractAll = document.getElementById('extractAll');
+const repackZip = document.getElementById('repackZip');
+const clearBtn = document.getElementById('clear');
+const progressWrap = document.getElementById('progressWrap');
+const progressText = document.getElementById('progressText');
+const progressBar = document.getElementById('progressInner');
+const globalLevel = document.getElementById('globalLevel');
+const levelTip = document.getElementById('levelTip');
+const loopNum = document.getElementById('loopNum');
+globalLevel.oninput = () => {
+  levelTip.textContent = `${globalLevel.value}级解压力度`;
+};
+function setProgress(percent,text){
+  progressWrap.style.display = 'block';
+  progressText.innerText = text;
+  progressBar.style.width = percent+'%';
+}
+function hideProgress(){
+  progressWrap.style.display = 'none';
+  progressBar.style.width = '0%';
+}
+dragBox.addEventListener('dragover', e=>{e.preventDefault();dragBox.classList.add('active')})
+dragBox.addEventListener('dragleave', ()=>dragBox.classList.remove('active'))
+dragBox.addEventListener('drop', e=>{
+  e.preventDefault();dragBox.classList.remove('active');
+  handleUpload(e.dataTransfer.files);
+})
+dragBox.onclick = ()=>fileInput.click();
+fileInput.onchange = ()=>handleUpload(fileInput.files);
+function getFileInfo(file){
+  const name = file.name;
+  const ext = name.split('.').pop().toLowerCase();
+  let type = '';
+  let compressLv = '未知';
+  if(['zip'].includes(ext)){type='标准压缩包';compressLv='中等压缩';}
+  if(['rar'].includes(ext)){type='RAR压缩';compressLv='高压缩';}
+  if(['7z'].includes(ext)){type='7Z极限压缩';compressLv='极高压缩';}
+  if(['tar','gz','tgz','tar.gz'].includes(ext)){type='归档压缩';compressLv='轻度压缩';}
+  return {ext,type,compressLv,size:file.size};
+}
+function handleUpload(files){
+  for(let f of files){
+    const exist = archiveFiles.some(item=>item.name===f.name&&item.size===f.size);
+    if(!exist){
+      const info = getFile(f);
+      archiveFiles.push({file:f,info,extracted:false,entries:[]});
+    }
+  }
+  renderArchiveList();
+  fileResultWrap.classList.add('hidden');
+  extractedAll.clear();
+  repackZip.classList.add('hidden');
+  hideProgress();
+}
+function renderArchiveList(){
+  archiveList.innerHTML = '';
+  archiveFiles.forEach((item,idx)=>{
+    const info = item.info;
+    const sizeMb = (info.size/1024/1024).toFixed(2);
+    const div = document.createElement('div');
+    div.className = 'bg-white rounded-lg shadow p-4';
+    div.innerHTML = `
+      <div class="grid grid-cols-2 md:grid-4 gap-3 mb-3 text-sm">
+        <div><span class="text-slate-500">文件名：</span>${item.file.name}</div>
+        <div><span class="text-slate-500">格式后缀：</span>.${info.ext}</div>
+        <div><span class="text-slate-500">文件类型：</span>${info.type}</div>
+        <div><span class="text-slate-500">原生压缩等级：</span>${info.compressLv}</div>
+      </div>
+      <p class="text-xs text-slate-500 mb-3">文件大小：${size} MB ${item.extracted?'✅ 已解压':'⏳ 待解压'}</p>
+      <div class="flex gap-2">
+        <button data-i="${idx}" class="single-extract bg-emerald-100 text-emerald-600 px-3 py-1 rounded text-sm">单独解压（使用当前全局力度）</button>
+        <select data-i="${idx}" class="level-select border px-2 py-1 rounded text-sm">
+          <option value="1">1级（快速浅层）</option>
+          <option value="3">3级均衡</option>
+          <option value="5" selected>5级标准</option>
+          <option value="8">8级深度</option>
+          <option value="10">10级极致完整</option>
+        </select>
+        <button data-i="${idx}" class="custom-extract bg-teal-100 text-teal-600 px-3 py-1 rounded text-sm">使用选中等级解压</button>
+        <button data-i="${idx}" class="del-item bg-red-100 text-red-600 px-3 py-1 rounded text-sm">删除</button>
+      </div>
+    `;
+    archiveList.appendChild(div);
+  })
+  document.querySelectorAll('.single-extract').forEach(btn=>{
+    btn.onclick = ()=>extractSingle(Number(btn.dataset.i), archiveFiles.length, Number(globalLevel.value));
+  })
+  document.querySelectorAll('.custom-extract').forEach(btn=>{
+    btn.onclick = ()=>{
+      const i = Number(btn.dataset.i);
+      const sel = document.querySelector(`.level-select[data-i="${i}"]`);
+      const lv = Number(sel.value);
+      extractSingle(i, archiveFiles.length, lv);
+    }
+  })
+  document.querySelectorAll('.del-item').forEach(btn=>{
+    btn.onclick = ()=>{
+      const i = Number(btn.dataset.i);
+      archiveFiles.splice(i,1);
+      renderArchiveList();
+      fileResultWrap.classList.add('hidden');
+      extractedAll.clear();
+      repackZip.classList.add('hidden');
+      hideProgress();
+    }
+  })
+}
+async function extractFflate(file, loop, level, total, currentIdx){
+  let buf = await file.arrayBuffer();
+  let u8 = new Uint8Array(buf);
+  let entries = {};
+  const maxLoop = Number(loopNum);
+  const iter = Math.min(loop * level, maxLoop);
+  for(let i=0;i<iter;i++){
+    setProgress(((currentIdx*iter+i+1)/(total*iter)*100).toFixed(1),`正在解压第${currentIdx}/${total}包，迭代${i+1}/${iter}`);
+    if(file.name.endsWith('.zip')) entries = fflate.unzipSync(u8);
+    else if(file.name.endsWith('.7z')) entries = fflate.un7zSync(u8);
+    else if(file.name.endsWith('.tar')||file.name.endsWith('.tgz')||file.name.endsWith('.tar.gz')){
+      u8 = fflate.decompressSync(u8);
+      entries = fflate.untarSync(u8);
+    }
+  }
+  return entries;
+}
+async function extractRar(file, loop, level, total, currentIdx){
+  const maxLoop = Number(loopNum);
+  const iter = Math.min(loop * level, maxLoop);
+  let buf = await file.arrayBuffer();
+  let u8 = new Uint8Array(buf);
+  let archive;
+  for(let i=0;i<iter;i++){
+    setProgress(((currentIdx*iter+i+1)/(total*iter)*100).toFixed(1),`RAR解压第${currentIdx}/${total}，迭代${i+1}/${iter}`);
+    archive = await UnrarWasm.loadArchive(u8);
+  }
+  const entries = {};
+  for(let entry of archive.entries){
+    if(entry.isFile){
+      const data = await archive.extractFile(entry.name);
+      entries[entry.name] = data;
+    }
+  }
+  return entries;
+}
+async function extractSingle(idx, total=1, level){
+  hideProgress();
+  const item = archiveFiles[idx];
+  extractAll.disabled = true;
+  let entries = {};
+  try{
+    if(item.file.name.toLowerCase().endsWith('.rar')){
+      entries = await extractRar(item.file, 3, level, total, idx+1);
+    }else{
+      entries = await extractFflate(item.file, 3, level, total, idx+1);
+    }
+    item.entries = entries;
+    item.extracted = true;
+    Object.entries(entries).forEach(([name,data])=>{
+      if(!name.endsWith('/')){
+        const blob = new Blob([data]);
+        extractedAll.set(name,blob);
+      }
+    })
+    renderArchiveList();
+    renderFileResult();
+    repackZip.classList.remove('hidden');
+    setProgress(100,`${item.file.name} 解压完成`);
+  }catch(err){
+    alert(`解压失败：${err.message}`);
+    setProgress(0,'解压出错');
+  }
+  extractAll.disabled = false;
+}
+extractAll.onclick = async ()=>{
+  hideProgress();
+  const total = archiveFiles.length;
+  const lv = Number(globalLevel.value);
+  for(let i=0;i<total;i++){
+    if(!archiveFiles[i].extracted) await extractSingle(i, total, lv);
+  }
+  setTimeout(hideProgress,1200);
+  alert('全部压缩包解压完成');
+}
+function renderFileResult(){
+  fileResultWrap.classList.remove('hidden');
+  fileResultList.innerHTML = '';
+  extractedAll.forEach((blob,name)=>{
+    const div = document.createElement('div');
+    div.className = 'file-item px-4 py-3 flex justify-between items-center';
+    div.innerHTML = `
+      <span class="truncate">${name}</span>
+      <button data-fn="${name}" class="download-file bg-blue-100 text-blue-600 px-3 py-1 rounded text-sm">下载</button>
+    `;
+    fileResultList.appendChild(div);
+  })
+  document.querySelectorAll('.download-file').forEach(btn=>{
+    btn.onclick = ()=>{
+      const fn = btn.dataset.fn;
+      saveAs(extractedAll.get(fn),fn);
+    }
+  })
+}
+repackZip.onclick = async ()=>{
+  const zip = new JSZip();
+  extracted.forEach((blob,name)=>zip.file(name,blob));
+  const zipBlob = await zip.generateAsync({type:'blob'});
+  saveAs(zipBlob,'解压文件合集.zip');
+}
+clearBtn.onclick = ()=>{
+  archiveFiles = [];
+  extractedAll.clear();
+  archiveList.innerHTML = '';
+  fileResultWrap.classList.add('hidden');
+  repackZip.classList.add('hidden');
+  hideProgress();
+}
+</script>
+</body>
+</html>

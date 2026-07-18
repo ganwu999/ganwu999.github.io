@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>条形码生成器-导入二维码解析</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsqr.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4f46e5',
+            warn: '#e67e22',
+            surface: {
+              light: '#ffffff',
+              dark: '#111827'
+            },
+            card: {
+              light: '#f9fafb',
+              dark: '#1f2937'
+            }
+          },
+          transitionProperty: {
+            'height': 'height',
+            'opacity-scale': 'opacity transform'
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .smooth-all {
+        transition: all 0.26s ease-out;
+      }
+      .btn-hover {
+        @apply smooth-all hover:shadow-lg active:scale-[0.96];
+      }
+      .card-shadow {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      }
+      .dark .card-shadow {
+        box-shadow: 0 4px 20px rgba(0,0,0.25);
+      }
+      .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out both;
+      }
+      .animate-delay-100 {
+        animation-delay: 0.1s;
+      }
+      .animate-delay-200 {
+        animation-delay: 0.2s;
+      }
+      .animate-delay-300 {
+        animation-delay: 0.3s;
+      }
+      .animate-delay-400 {
+        animation-delay: 0.4s;
+      }
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    .toast-anim {
+      animation: toastPop 2.2s ease forwards;
+    }
+    @keyframes toastPop {
+      0% { opacity: 0; transform: translateY(12px) scale(0.92); }
+      12% { opacity: 1; transform: translateY(0) scale(1); }
+      88% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(12px) scale(0.92); }
+    }
+    /* 完全复用你工具同款圆环入场动画 */
+    .anim-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #080812;
+      z-index: 9999;
+      animation: maskSlideLeft 1.2s linear 4.2s forwards;
+    }
+    @keyframes maskSlideLeft {
+      to { transform: translateX(-100vw); }
+    }
+    .ring-box {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .ring {
+      position: absolute;
+      border: 2px solid #60a5fa;
+      border-radius: 50%;
+      opacity: 0;
+    }
+    .ring-center {
+      top: 50%;
+      left: 50%;
+      width: 120px;
+      height: 120px;
+      transform: translate(-50%, -50%) scale(0);
+      animation: centerRing 1.2s ease-out forwards;
+    }
+    @keyframes centerRing {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+      30% { opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    .r1 { width: 80px; height: 80px; animation: r1Move 1.8s ease-out 1.2s forwards; }
+    .r2 { width: 60px; height: 60px; animation: r2Move 1.8s ease-out 1.2s forwards; }
+    .r3 { width: 100px; height: 100px; animation: r3Move 1.8s ease-out 1.2s forwards; }
+    .r4 { width: 70px; height: 70px; animation: r4Move 1.8s ease-out 1.2s forwards; }
+    @keyframes r1Move {
+      0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+      100% { top:15%;left:20%;transform:translate(-50%,-50%) scale(0.8);opacity:0.7; }
+    }
+    @keyframes r2Move {
+      0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+      100% { top:75%;left:80%;transform:translate(-50%,-50%) scale(0.6);opacity:0.5; }
+    }
+    @keyframes r3Move {
+      0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+      100% { top:20%;left:78%;transform:translate(-50%,-50%) scale(0.9);opacity:0.6; }
+    }
+    @keyframes r4Move {
+      0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+      100% { top:80%;left:18%;transform:translate(-50%,-50%) scale(0.7);opacity:0.4; }
+    }
+    .text-ganwu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      font-size: 5rem;
+      color: #e0efff;
+      font-weight: bold;
+      transform: translate(-50%, -50%) scale(0.1);
+      opacity: 0;
+      animation: textIn 1.2s ease-out 3s forwards;
+    }
+    @keyframes textIn {
+      to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 smooth-all min-h-screen">
+  <!-- 全屏开场圆环入场动画 -->
+  <div class="anim-mask">
+    <div class="ring-box">
+      <div class="ring ring-center"></div>
+      <div class="ring r1"></div>
+      <div class="ring r2"></div>
+      <div class="ring r3"></div>
+      <div class="ring r4"></div>
+    </div>
+    <div class="text-ganwu">感悟</div>
+  </div>
+
+  <div id="toastBox" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+  <div class="container mx-auto px-4 py-10 max-w-5xl">
+    <header class="flex justify-between items-center mb-10 animate-fade-in-up">
+      <div>
+        <h1 class="text-[clamp(1.7rem,4vw,2.4rem)] font-bold text-slate-800 dark:text-white tracking-tight">条形码生成器</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">支持上传二维码图片解析内容，本地生成无水印</p>
+      </div>
+      <div class="flex gap-4 items-center">
+        <button id="themeToggle" class="w-10 h-10 rounded-full bg-card-light dark:bg-card-dark flex items-center justify-center btn-hover">
+          <span class="dark:hidden">☾</span>
+          <span class="hidden dark:block">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- 左侧配置面板 -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 card-shadow animate-fade-in-up animate-delay-100">
+        <h2 class="text-lg font-semibold mb-5 flex items-center gap-2">
+          <span>≡</span>参数设置
+        </h2>
+
+        <!-- 二维码图片导入区域 -->
+        <div class="mb-5 p-4 border border-dashed border-primary/40 rounded-lg bg-primary/5">
+          <label class="block text-sm font-medium text-primary mb-2">
+            <span>▢</span>上传二维码图片自动解析
+          </label>
+          <input type="file" id="qrFileInput" accept="image/*" class="w-full text-sm">
+          <p class="text-xs text-slate-500 mt-1">上传图片识别二维码文本，自动填入下方输入框</p>
+        </div>
+
+        <!-- 条码内容 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">条码内容</label>
+          <textarea id="barText" rows="3" placeholder="输入数字/字母，EAN13仅支持13位数字"
+            class="w-full border border-slate-200 dark:border-slate-300 rounded-lg px-3 py-2.5 smooth-all focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-card-dark dark:text-white resize-none"></textarea>
+        </div>
+
+        <!-- 条码类型 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">条码格式</label>
+          <select id="barType" class="w-full border border-slate-200 dark:border-slate-300 rounded-lg px-3 py-2.5 smooth-all focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-card-dark dark:text-white">
+            <option value="CODE128">CODE128（通用，数字字母）</option>
+            <option value="EAN13">EAN13（商品13位纯数字）</option>
+            <option value="UPC">UPC-A（北美商品12位）</option>
+            <option value="CODE39">CODE39（工业物流）</option>
+          </select>
+        </div>
+
+        <!-- 尺寸设置 -->
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">条码宽度</label>
+            <input type="number" id="barWidth" value="2" min="1" max="5"
+              class="w-full border border-slate-200 dark:border-slate-300 rounded-lg px-3 py-2.5 smooth-all focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-card-dark dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">条码高度</label>
+            <input type="number" id="barHeight" value="80" min="30" max="150"
+              class="w-full border border-slate-200 dark:border-slate-300 rounded-lg px-3 py-2.5 smooth-all focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-card-dark dark:text-white">
+          </div>
+        </div>
+
+        <!-- 颜色 -->
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">条码颜色</label>
+            <input type="color" id="barColor" value="#000000" class="w-full h-10 rounded border border-slate-200 dark:border-slate-300">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">背景颜色</label>
+            <input type="color" id="bgColor" value="#ffffff" class="w-full h-10 rounded border border-slate-200 dark:border-slate-300">
+          </div>
+        </div>
+
+        <!-- 显示文字开关 -->
+        <div class="mb-6 flex items-center gap-2">
+          <input type="checkbox" id="showText" checked class="w-4 h-4 accent-primary">
+          <label for="showText" class="text-sm text-slate-700 dark:text-slate-300">显示底部数字文字</label>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="grid grid-cols-2 gap-3">
+          <button id="genBtn" class="bg-primary text-white py-3 rounded-lg font-medium btn-hover flex justify-center items-center gap-2">
+            <span>✦</span>生成条码
+          </button>
+          <button id="clearBtn" class="bg-card-light dark:bg-card-dark py-3 rounded-lg font-medium text-slate-700 dark:text-slate-200 btn-hover flex justify-center items-center gap-2">
+            <span>✕</span>清空全部
+          </button>
+        </div>
+      </div>
+
+      <!-- 右侧预览下载 -->
+      <div class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 card-shadow flex flex-col animate-fade-in-up animate-delay-200">
+        <h2 class="text-lg font-semibold mb-5 flex items-center gap-2">
+          <span>👁</span>预览与下载
+        </h2>
+
+        <div id="previewBox" class="flex-1 min-h-[260px] border border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center p-4 mb-5 bg-slate-50 dark:bg-slate-800">
+          <span class="text-slate-400 dark:text-slate-500 text-center">输入内容/上传二维码图片<br>点击生成条码预览</span>
+          <svg id="barcode" class="hidden max-w-full"></svg>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 animate-fade-in-up animate-delay-300">
+          <button id="downloadPng" disabled class="bg-emerald-600 text-white py-3 rounded-lg font-medium btn-hover flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span>↓</span>下载PNG
+          </button>
+          <button id="downloadSvg" disabled class="bg-orange-500 text-white py-3 rounded-lg font-medium btn-hover flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span>&lt;/&gt;</span>下载SVG矢量
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="mt-10 text-center text-slate-400 dark:text-slate-500 text-sm animate-fade-in-up animate-delay-400">
+      纯前端本地解析/生成 · 图片与文本不上传服务器 · 无广告无水印
+    </footer>
+  </div>
+
+  <script>
+    const barText = document.getElementById('barText');
+    const barType = document.getElementById('barType');
+    const barWidth = document.getElementById('barWidth');
+    const barHeight = document.getElementById('barHeight');
+    const barColor = document.getElementById('barColor');
+    const bgColor = document.getElementById('bgColor');
+    const showText = document.getElementById('showText');
+    const genBtn = document.getElementById('genBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const barcodeSvg = document.getElementById('barcode');
+    const previewBox = document.getElementById('previewBox');
+    const downloadPng = document.getElementById('downloadPng');
+    const downloadSvg = document.getElementById('downloadSvg');
+    const qrFileInput = document.getElementById('qrFileInput');
+    const toastBox = document.getElementById('toastBox');
+    const themeToggle = document.getElementById('themeToggle');
+    let svgRaw = '';
+
+    // 深色模式同步
+    if(localStorage.getItem('dark') === '1' || (!localStorage.getItem('dark') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+    themeToggle.onclick = () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('dark', document.documentElement.classList.contains('dark') ? '1' : '0');
+    };
+
+    // 弹窗提示
+    function showToast(text) {
+      const t = document.createElement('div');
+      t.className = 'px-4 py-3 rounded-lg bg-emerald-500 text-white toast-anim';
+      t.innerText = text;
+      toastBox.appendChild(t);
+      setTimeout(() => t.remove(), 2200);
+    }
+    // 复制通用方法
+    async function copyText(str) {
+      try {
+        await navigator.clipboard.writeText(str);
+        showToast("复制成功");
+      }catch(err) {
+        const textarea = document.createElement('textarea');
+        textarea.value = str;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+        showToast("复制成功");
+      }
+    }
+
+    // 上传二维码图片解析
+    qrFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (ev) => {
+        img.src = ev.target.result;
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const qrCode = jsqr(imgData.data, imgData.width, imgData.height);
+          if (qrCode) {
+            barText.value = qrCode.data;
+            showToast('二维码解析成功，已填入内容框！');
+          } else {
+            showToast('未识别到有效二维码，请更换清晰图片');
+          }
+          qrFileInput.value = '';
+        }
+      }
+    });
+
+    // 生成条码核心
+    function generateBarcode() {
+      const text = barText.value.trim();
+      if (!text) {
+        showToast('请输入条码内容或上传二维码图片');
+        return;
+      }
+      try {
+        barcodeSvg.classList.remove('hidden');
+        previewBox.querySelector('span')?.remove();
+        JsBarcode("#barcode", text, {
+          format: barType.value,
+          width: Number(barWidth.value),
+          height: Number(barHeight.value),
+          lineColor: barColor.value,
+          background: bgColor.value,
+          displayValue: showText.checked,
+          margin: 10
+        });
+        svgRaw = barcodeSvg.outerHTML;
+        downloadPng.disabled = false;
+        downloadSvg.disabled = false;
+      } catch (err) {
+        showToast('生成失败：内容与条码格式不匹配');
+        resetPreview();
+      }
+    }
+
+    // 重置预览区域
+    function resetPreview() {
+      barcodeSvg.classList.add('hidden');
+      downloadPng.disabled = true;
+      downloadSvg.disabled = true;
+      svgRaw = '';
+      if (!preview.querySelector('span')) {
+        previewBox.innerHTML = `<span class="text-slate-400 dark:text-slate-500 text-center">输入内容/上传二维码图片<br>点击生成条码预览</span><svg id="barcode" class="hidden max-w-full"></svg>`;
+      }
+    }
+
+    // 清空所有输入与预览
+    function clearAll() {
+      barText.value = '';
+      barType.value = 'CODE128';
+      barWidth.value = 2;
+      barHeight.value = 80;
+      barColor.value = '#000000';
+      bgColor.value = '#ffffff';
+      showText.checked = true;
+      qrFileInput.value = '';
+      resetPreview();
+    }
+
+    // 下载PNG高清
+    function downloadPNG() {
+      const svgBlob = new Blob([svgRaw], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * 3;
+        canvas.height = img.height * 3;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = bgColor.value;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,canvas.width,canvas.height);
+        const link = document.createElement('a');
+        link.download = '条形码.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+
+    // 下载SVG矢量文件
+    function downloadSVG() {
+      const blob = new Blob([svgRaw], {type: 'image/svg+xml;charset=utf-8'});
+      const link = document.createElement('a');
+      link.download = '条形码.svg';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // 绑定点击事件
+    genBtn.addEventListener('click', generateBarcode);
+    clearBtn.addEventListener('click', clearAll);
+    downloadPng.addEventListener('click', downloadPNG);
+    downloadSvg.addEventListener('click', downloadSVG);
+  </script>
+</body>
+</html>

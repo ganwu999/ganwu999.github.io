@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>id生成器-感悟</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script>
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                main: "#4338ca",
+                cardLight: "#f9fafb",
+                cardDark: "#1f2937",
+                bgLight: "#ffffff",
+                bgDark: "#111827"
+            }
+        }
+    }
+}
+</script>
+<style>
+.all-smooth { transition: all 0.24s ease; }
+.btn-active { transition: transform 0.2s; }
+.btn-active:active { transform: scale(0.96); }
+.card-shadow { box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
+.dark .card-shadow { box-shadow: 0 2px 14px rgba(0,0,0,0.2); }
+.tag-item { padding: 4px 8px; border-radius: 6px; font-size: 12px; border: 1px solid #94a3b8; cursor: pointer; user-select: none; margin: 4px; }
+.tag-active { background: #4338ca; color: #fff; border-color: #4338ca; }
+/* ========== 入场动画遮罩样式 新增到你原有style末尾 ========== */
+.anim-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #080812;
+  z-index: 9999; /* 层级最高，盖住你所有页面内容 */
+  animation: maskSlideLeft 1.2s linear 4.2s forwards;
+}
+@keyframes maskSlideLeft {
+  to { transform: translateX(-100vw); }
+}
+
+.ring-box {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  border: 2px solid #60a5fa;
+  border-radius: 50%;
+  opacity: 0;
+}
+.ring-center {
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: centerRing 1.2s ease-out forwards;
+}
+@keyframes centerRing {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.r1 { width: 80px; height: 80px; animation: r1Move 1.8s ease-out 1.2s forwards; }
+.r2 { width: 60px; height: 60px; animation: r2Move 1.8s ease-out 1.2s forwards; }
+.r3 { width: 100px; height: 100px; animation: r3Move 1.8s ease-out 1.2s forwards; }
+.r4 { width: 70px; height: 70px; animation: r4Move 1.8s ease-out 1.2s forwards; }
+@keyframes r1Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:15%;left:20%;transform:translate(-50%,-50%) scale(0.8);opacity:0.7; }
+}
+@keyframes r2Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:75%;left:80%;transform:translate(-50%,-50%) scale(0.6);opacity:0.5; }
+}
+@keyframes r3Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:20%;left:78%;transform:translate(-50%,-50%) scale(0.9);opacity:0.6; }
+}
+@keyframes r4Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:80%;left:18%;transform:translate(-50%,-50%) scale(0.7);opacity:0.4; }
+}
+.text-ganwu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 5rem;
+  color: #e0efff;
+  font-weight: bold;
+  transform: translate(-50%, -50%) scale(0.1);
+  opacity: 0;
+  animation: textIn 1.2s ease-out 3s forwards;
+}
+@keyframes textIn {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+</style>
+</head>
+<body class="all-smooth bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-800 dark:text-slate-100">
+<div class="container mx-auto px-3 py-6 max-w-6xl">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">超大词库通顺ID生成器</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400">海量扩充词语｜自定义生成数量｜分页防卡顿｜词语拼接无违和</p>
+        </div>
+        <button id="toggleDark" class="w-10 h-10 rounded-full bg-cardLight dark:bg-cardDark flex items-center justify-center btn-active card-shadow">
+            <i class="fa fa-moon-o dark:hidden"></i>
+            <i class="fa fa-sun-o hidden dark:block"></i>
+        </button>
+    </div>
+
+    <div class="rounded-xl bg-bgLight dark:bg-bgDark p-4 card-shadow mb-4">
+        <h3 class="font-semibold mb-3">素材分类标签（勾选生效，词库已大幅扩容）</h3>
+        <div id="tagList" class="flex flex-wrap"></div>
+        <p class="text-xs text-orange-500 mt-2">组合规则：完整词语拼接，不会零散单字乱组合，ID流畅自然；数字符号仅放在首尾</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="rounded-xl bg-bgLight dark:bg-bgDark p-4 card-shadow">
+            <h3 class="font-semibold mb-3">ID长度设置</h3>
+            <div class="flex gap-3 items-center mb-2">
+                <label class="w-24">最小长度：</label>
+                <input type="number" id="minLen" value="4" min="1" class="flex-1 px-3 py-2 rounded border dark:bg-cardDark dark:border-slate-700">
+            </div>
+            <div class="flex gap-3 items-center">
+                <label class="w-24">最大长度：</label>
+                <input type="number" id="maxLen" value="40" min="1" class="flex-1 px-3 py-2 rounded border dark:bg-cardDark dark:border-slate-700">
+            </div>
+        </div>
+        <div class="rounded-xl bg-bgLight dark:bg-bgDark p-4 card-shadow">
+            <h3 class="font-semibold mb-3">生成配置（数量可自由填写）</h3>
+            <div class="mb-2">
+                <label>单次生成数量：</label>
+                <input type="number" id="genCount" value="300" min="1" placeholder="任意数字" class="w-full px-3 py-2 rounded border dark:bg-cardDark dark:border-slate-700 mt-1">
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <label class="inline-flex items-center gap-1">
+                    <input type="checkbox" id="useNum" checked> 末尾/开头数字
+                </label>
+                <label class="inline-flex items-center gap-1">
+                    <input type="checkbox" id="useSym"> 分隔符号 _ . -
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-xl bg-bgLight dark:bg-bgDark p-4 card-shadow mb-4">
+        <h3 class="font-semibold mb-3">自定义扩充词库（多词用英文逗号分隔）</h3>
+        <textarea id="customWords" rows="2" placeholder="粘贴你收集的新词，例如：山野清风,暮色归鸟,StarrySky" class="w-full px-3 py-2 rounded border dark:bg-cardDark dark:border-slate-700 resize-none"></textarea>
+    </div>
+
+    <div class="rounded-xl bg-bgLight dark:bg-bgDark p-4 card-shadow mb-4 flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span>单页展示条数：</span>
+            <select id="pageSize" class="px-3 py-2 rounded border dark:bg-cardDark dark:border-slate-700">
+                <option value="20">20条</option>
+                <option value="50" selected>50条</option>
+                <option value="100">100条</option>
+                <option value="200">200条</option>
+            </select>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <button id="generateBtn" class="px-6 py-2 bg-main text-white rounded btn-active">批量生成ID</button>
+            <button id="clearAllBtn" class="px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded btn-active">清空全部</button>
+            <button id="copyAllBtn" class="px-6 py-2 bg-emerald-500 text-white rounded btn-active">复制所有ID</button>
+        </div>
+    </div>
+
+    <div id="pageCtrl" class="hidden rounded-xl bg-bgLight dark:bg-bgDark p-3 card-shadow mb-4 flex items-center justify-center gap-4">
+        <button id="prevPage" class="px-3 py-1 rounded border dark:border-slate-700 btn-active">上一页</button>
+        <span>第 <span id="currentPage">1</span> 页 / 总计 <span id="totalPage">0</span> 页</span>
+        <button id="nextPage" class="px-3 py-1 rounded border dark:border-slate-700 btn-active">下一页</button>
+    </div>
+
+    <div id="resultWrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+</div>
+
+<script>
+// ====================== 超大扩容词库 ======================
+const tagPool = {
+    sceneryChinese: {
+        label: "中式风景词组",
+        words: ["浅雾","晚风","星河","归舟","枕雪","栖云","渡川","枫林","苔阶","月檐","寒屿","清禾","霜砚","昭珩","瑾澈","岚烬","笙辞","玄宸","疏遥","静幽","浮澜","漪枫","桐芷","棠梨","菱絮","霏霖","曦曜","朔宵","晓微","涧泉","潭江","潮汐","霭霞","霓雷","露冰","辉芒","墨笺","玉珠","瑶琳","亭榭","轩庐","山涧","云崖","汀兰","秋霜","春霖","暮霞","晨曦","孤峰","平湖","远汀","疏林","残雪","薄烟","层岚","寒江","野渡","长堤","古寺","空山","落霞","孤鹜","流萤","晚风辞","雾中川","云栖屿","霜覆禾","星垂野","月落檐","枫间雾","桐下霖","山间曦","江上潮","林间絮","崖边岚","溪底月","渡舟风","枕雪庭","栖云亭"]
+    },
+    lonelyMood: {
+        label: "清冷孤寂意境",
+        words: ["寂眠","迟叙","孤屿","暮寒","凉辞","砚霜","昭瑾","澈岚","烬笙","辞玄","宸疏","遥静","空渺","独酌","零初","野软","温寂","屿霜","幽淡","素凝","寻渡","归枕","浮沉","古巷","残阶","旧檐","荒庭","枯林","冷溪","孤川","远岚","薄宵","微晓","残霞","寒潮","孤星","冷月","空庭","静庐","荒堤","疏桐","零絮","凉霖","淡曦","孤峰雾","独舟风","空山雪","旧院霜","晚巷灯","冷溪月","荒林岚","残堤潮","零云辞","寂星眠","孤川渡","暮庭寒"]
+    },
+    plantCreature: {
+        label: "动植物意象词",
+        words: ["鹿鸣","鲸落","鹤归","猫眠","松涛","竹影","桂香","梅枝","荷莲","鸢尾","茉莉","蔷薇","芍药","雏菊","樱花","流云","飞鸟","游鱼","孤狐","灵鸦","白鸥","青鸾","锦雀","寒蝉","秋萤","彩蝶","野鹿","山狐","海鲸","云鹤","江鸥","溪鱼","庭猫","松间鹿","竹下莺","荷边鱼","梅上雀","雾中鹤","海上鲸","林间狐","汀前鸥","棠梨雀","菱絮蝶","枫林蝉","桐芷萤","松风鹿","竹露莺"]
+    },
+    warmHealing: {
+        label: "温柔治愈中文",
+        words: ["温禾","软曦","甜棠","轻絮","柔霖","安屿","宁川","暖枫","舒岚","静芷","缓星","慢月","柔霞","软雾","温潮","安云","宁雪","暖檐","舒汀","缓林","晚风安","曦光软","棠梨温","絮云轻","霖雨柔","屿间宁","川上安","枫前暖","芷边舒","星子缓","月色柔","暖庭禾","安山雾","宁溪霞","软云絮","温柔曦","安宁屿","舒缓川"]
+    },
+    engNatureLarge: {
+        label: "海量英文自然",
+        words: ["echo","moon","void","silent","dawn","ember","frost","lunar","peak","ripple","breeze","sunset","twilight","mist","ocean","wave","creek","willow","maple","orchid","petal","blossom","dusk","aurora","stellar","cosmos","nova","comet","lark","swan","deer","fox","raven","dove","iris","lily","rose","violet","crystal","amber","opal","pearl","silk","honey","lavender","jasmine","clover","breezeleaf","moonmist","starfall","dawnlight","frostpeak","lunarwave","oceanbreeze","twilightaurora"]
+    },
+    engDreamMood: {
+        label: "英文梦境情绪",
+        words: ["dream","slumber","wander","roam","drift","float","glide","serene","tranquil","gentle","calm","peace","soft","mild","glimmer","spark","whisper","murmur","melody","rhyme","soul","vibe","aura","grace","charm","magic","wish","hope","bliss","delight","tenderness","warmth","solace","joy","melancholy","eternal","infinite","tiny","vast","pure","pale","bright","dim","shadow","blush","ivory","haze","softglow","dreamdrift","slumberwhisper","wanderlight","tranquilwave","gentlemist"]
+    }
+};
+
+const numList = ["0","1","2","3","4","5","6","7","8","9"];
+const symList = ["_",".","-"];
+let resultIds = [];
+let currentPage = 1;
+let totalPageCount = 1;
+let selectedTags = [];
+
+// 深色模式本地缓存
+(function initDarkMode() {
+    if(localStorage.getItem("darkMode") === "1" || window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.classList.add("dark");
+    }
+})();
+document.getElementById("toggleDark").onclick = () => {
+    document.documentElement.classList.toggle("dark");
+    localStorage.setItem("darkMode", document.documentElement.classList.contains("dark") ? "1" : "0");
+};
+
+// 渲染标签栏
+function renderTagSelector() {
+    const container = document.getElementById("tagList");
+    container.innerHTML = "";
+    Object.keys(tagPool).forEach(key => {
+        const span = document.createElement("span");
+        span.className = "tag-item";
+        span.dataset.tagKey = key;
+        span.innerText = tagPool[key].label;
+        span.onclick = () => {
+            if (span.classList.contains("tag-active")) {
+                span.classList.remove("tag-active");
+                selectedTags = selectedTags.filter(k => k !== key);
+            } else {
+                span.classList.add("tag-active");
+                selectedTags.push(key);
+            }
+        };
+        container.appendChild(span);
+    });
+}
+renderTagSelector();
+
+// 随机取数组元素
+function randomPick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// 分割自定义词语
+function splitCustomWords(text) {
+    return text.split(/[,，]/).map(item => item.trim()).filter(item => item.length > 0);
+}
+
+// 生成单条通顺ID，严格词语拼接不碎字
+function createSingleId(minLength, maxLength, useNumber, useSymbol, customWordArr) {
+    let sourceWords = [];
+    selectedTags.forEach(tag => {
+        sourceWords.push(...tagPool[tag].words);
+    });
+    sourceWords.push(...customWordArr);
+    if (sourceWords.length === 0) return "请勾选素材标签";
+
+    const combineMode = Math.floor(Math.random() * 4);
+    let baseText = "";
+    switch(combineMode) {
+        case 0: baseText = randomPick(sourceWords) + randomPick(sourceWords); break;
+        case 1: baseText = randomPick(sourceWords) + randomPick(sourceWords) + randomPick(sourceWords); break;
+        case 2: baseText = randomPick(sourceWords) + randomPick(sourceWords) + randomPick(sourceWords) + randomPick(sourceWords); break;
+        case 3: baseText = randomPick(sourceWords); break;
+    }
+    while(baseText.length < minLength) {
+        baseText += randomPick(sourceWords);
+    }
+    baseText = baseText.substring(0, maxLength);
+
+    let finalId = baseText;
+    if (useNumber && Math.random() > 0.5) {
+        const num = randomPick(numList);
+        finalId = Math.random() > 0.5 ? finalId + num : num + finalId;
+    }
+    if (useSymbol && Math.random() > 0.6) {
+        const sym = randomPick(symList);
+        finalId = Math.random() > 0.5 ? finalId + sym : sym + finalId;
+    }
+    return finalId;
+}
+
+// 批量生成按钮事件，数组预分配防卡顿
+document.getElementById("generateBtn").onclick = function() {
+    const minL = Number(document.getElementById("minLen").value);
+    const maxL = Number(document.getElementById("maxLen").value);
+    const genTotal = Number(document.getElementById("genCount").value);
+    const openNum = document.getElementById("useNum").checked;
+    const openSym = document.getElementById("useSym").checked;
+    const customWords = splitCustomWords(document.getElementById("customWords").value);
+
+    if (selectedTags.length === 0) {
+        alert("至少勾选一类素材标签才能生成");
+        return;
+    }
+    if (minL < 1 || maxL < minL || genTotal < 1) {
+        alert("长度或生成数量填写不合法");
+        return;
+    }
+
+    resultIds = new Array(genTotal);
+    for(let i = 0; i < genTotal; i++) {
+        resultIds[i] = createSingleId(minL, maxL, openNum, openSym, customWords);
+    }
+
+    const pageSize = Number(document.getElementById("pageSize").value);
+    totalPageCount = Math.ceil(resultIds.length / pageSize);
+    currentPage = 1;
+    document.getElementById("pageCtrl").classList.remove("hidden");
+    renderPageData();
+};
+
+// 分页渲染：字符串缓冲一次性写入DOM，杜绝多次重绘卡顿
+function renderPageData() {
+    const pageSize = Number(document.getElementById("pageSize").value);
+    const wrapDom = document.getElementById("resultWrap");
+    const startIndex = (currentPage - 1) * pageSize;
+    const pageSlice = resultIds.slice(startIndex, startIndex + pageSize);
+    let htmlBuffer = "";
+
+    pageSlice.forEach(idStr => {
+        htmlBuffer += `
+        <div class="rounded p-3 bg-cardLight dark:bg-cardDark card-shadow flex justify-between items-center gap-2">
+            <span class="font-mono break-all">${idStr}</span>
+            <button class="copy-one px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-sm btn-active" data-val="${idStr}">复制</button>
+        </div>
+        `;
+    });
+    wrapDom.innerHTML = htmlBuffer;
+
+    // 批量绑定复制按钮
+    document.querySelectorAll(".copy-one").forEach(btn => {
+        btn.onclick = async () => {
+            await navigator.clipboard.writeText(btn.dataset.val);
+        };
+    });
+
+    document.getElementById("currentPage").innerText = currentPage;
+    document.getElementById("totalPage").innerText = totalPageCount;
+}
+
+// 分页切换
+document.getElementById("prevPage").onclick = () => {
+    if (currentPage > 1) {
+        currentPage--;
+        renderPageData();
+    }
+};
+document.getElementById("nextPage").onclick = () => {
+    if (currentPage < totalPageCount) {
+        currentPage++;
+        renderPageData();
+    }
+};
+
+// 切换每页条数刷新页面
+document.getElementById("pageSize").onchange = () => {
+    if (resultIds.length > 0) {
+        totalPageCount = Math.ceil(resultIds.length / Number(document.getElementById("pageSize").value));
+        currentPage = 1;
+        renderPageData();
+    }
+};
+
+// 清空全部
+document.getElementById("clearAllBtn").onclick = () => {
+    resultIds = [];
+    currentPage = 1;
+    totalPageCount = 0;
+    document.getElementById("resultWrap").innerHTML = "";
+    document.getElementById("pageCtrl").classList.add("hidden");
+};
+
+// 一键复制全部ID
+document.getElementById("copyAllBtn").onclick = async () => {
+    if (resultIds.length === 0) {
+        alert("暂无生成内容");
+        return;
+    }
+    await navigator.clipboard.writeText(resultIds.join("\n"));
+    alert("所有ID已复制至剪贴板");
+};
+</script>
+<div class="anim-mask">
+   <div class="ring-box">
+     <div class="ring ring-center"></div>
+     <div class="ring r1"></div>
+     <div class="ring r2"></div>
+     <div class="ring r3"></div>
+     <div class="ring r4"></div>
+   </div>
+   <div class="text-ganwu">感悟</div>
+ </div>
+</body>
+</html>

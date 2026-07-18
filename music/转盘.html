@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>转盘-感悟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* 转盘区域 */
+        .wheel-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .wheel-wrap {
+            position: relative;
+            width: 450px;
+            height: 450px;
+        }
+        #wheelCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 30px #7b2cbf;
+        }
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ff3e6c;
+            z-index: 10;
+        }
+        #startBtn {
+            margin-top: 30px;
+            padding: 14px 50px;
+            font-size: 20px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #ff3e6c, #7b2cbf);
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        #startBtn:active {
+            scale: 0.95;
+        }
+        #startBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        /* 设置面板 */
+        .setting-panel {
+            background: #242442;
+            padding: 25px;
+            border-radius: 16px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #e0c3fc;
+        }
+        .item-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .item-row input {
+            padding: 8px 10px;
+            border: none;
+            border-radius: 6px;
+            outline: none;
+        }
+        .txt-input {
+            flex: 2;
+        }
+        .rate-input {
+            width: 70px;
+        }
+        .del-btn {
+            background: #ff4757;
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #addItem {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            background: #4158d0;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .tip {
+            font-size: 13px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+        /* 弹窗 */
+        .mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+        }
+        .pop {
+            background: #fff;
+            color: #222;
+            padding: 40px 60px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .pop h3 {
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+        .pop button {
+            padding: 10px 30px;
+            border: none;
+            background: #7b2cbf;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* ===================== 圆环入场动画全套样式 ===================== */
+        .anim-mask {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: #080812;
+          z-index: 9999;
+          animation: maskSlideLeft 1.2s linear 4.2s forwards;
+        }
+        @keyframes maskSlideLeft {
+          to { transform: translateX(-100vw); }
+        }
+        .ring-box {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+        .ring {
+          position: absolute;
+          border: 2px solid #60a5fa;
+          border-radius: 50%;
+          opacity: 0;
+        }
+        .ring-center {
+          top: 50%;
+          left: 50%;
+          width: 120px;
+          height: 120px;
+          transform: translate(-50%, -50%) scale(0);
+          animation: centerRing 1.2s ease-out forwards;
+        }
+        @keyframes centerRing {
+          0 { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .r1 { width: 80px; height: 80px; animation: r1Move 1.8s ease-out 1.2s forwards; }
+        .r2 { width: 60px; height: 60px; animation: r2Move 1.8s ease-out 1.2s forwards; }
+        .r3 { width: 100px; height: 100px; animation: r3Move 1.8s ease-out 1.2s forwards; }
+        .r4 { width: 70px; height: 70px; animation: r4Move 1.8s ease-out 1.2s forwards; }
+        @keyframes r1Move {
+          0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+          100% { top:15%;left:20%;transform:translate(-50%,-50%) scale(0.8);opacity:0.7; }
+        }
+        @keyframes r2Move {
+          0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+          100% { top:75%;left:80%;transform:translate(-50%,-50%) scale(0.6);opacity:0.5; }
+        }
+        @keyframes r3Move {
+          0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+          100% { top:20%;left:78%;transform:translate(-50%,-50%) scale(0.9);opacity:0.6; }
+        }
+        @keyframes r4Move {
+          0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+          100% { top:80%;left:18%;transform:translate(-50%,-50%) scale(0.7);opacity:0.4; }
+        }
+        .text-ganwu {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          font-size: 5rem;
+          color: #e0efff;
+          font-weight: bold;
+          transform: translate(-50%, -50%) scale(0.1);
+          opacity: 0;
+          animation: textIn 1.2s ease-out 3s forwards;
+        }
+        @keyframes textIn {
+          to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 底层主转盘界面 -->
+    <div class="container">
+        <div class="wheel-box">
+            <div class="wheel-wrap">
+                <div class="pointer"></div>
+                <canvas id="wheelCanvas" width="450" height="450"></canvas>
+            </div>
+            <button id="startBtn">开始抽奖</button>
+        </div>
+        <div class="setting-panel">
+            <h2>自定义奖项与概率</h2>
+            <div id="itemList"></div>
+            <button id="addItem">+ 添加奖项</button>
+            <p class="tip">说明：填写任意数字作为权重，系统自动按权重比例分配中奖概率，无需总和100</p>
+        </div>
+    </div>
+    <!-- 中奖弹窗 -->
+    <div class="mask" id="mask">
+        <div class="pop">
+            <h3>恭喜中奖！</h3>
+            <p id="resultText" style="font-size:22px;margin-bottom:25px;"></p>
+            <button onclick="closeMask()">确认</button>
+        </div>
+    </div>
+
+    <!-- 顶层入场动画遮罩层（自动滑出露出转盘） -->
+    <div class="anim-mask">
+        <div class="ring-box">
+            <div class="ring ring-center"></div>
+            <div class="ring r1"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+            <div class="ring r4"></div>
+        </div>
+        <div class="text-ganwu">感悟</div>
+    </div>
+
+<script>
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const itemList = document.getElementById('itemList');
+        const addItemBtn = document.getElementById('addItem');
+        const mask = document.getElementById('mask');
+        const resultText = document.getElementById('resultText');
+        // 默认奖项数据
+        let prizeList = [
+            { text: "一等奖", rate: 1 },
+            { text: "二等奖", rate: 3 },
+            { text: "三等奖", rate: 6 },
+            { text: "谢谢参与", rate: 90 }
+        ];
+        let rotateAngle = 0; // 当前旋转角度
+        let isRunning = false;
+        const colorList = [
+            '#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ffeaa7','#dfe6e9','#fd79a8','#a29bfe'
+        ];
+        // 初始化奖项列表DOM
+        function renderItemDom() {
+            itemList.innerHTML = '';
+            prizeList.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'item-row';
+                div.innerHTML = `
+                    <input class="txt-input" value="${item.text}" placeholder="奖项名称" data-idx="${idx}">
+                    <input class="rate-input" type="number" min="1" value="${item.rate}" data-idx="${idx}">
+                    <button class="del-btn" data-idx="${idx}">×</button>
+                `;
+                itemList.appendChild(div);
+            })
+            bindItemEvent();
+            drawWheel();
+        }
+        // 绑定输入、删除事件
+        function bindItemEvent() {
+            // 修改文字
+            document.querySelectorAll('.txt-input').forEach(input => {
+                input.oninput = e => {
+                    const i = Number(e.target.dataset.idx);
+                    prizeList[i].text = e.target.value;
+                    drawWheel();
+                }
+            })
+            // 修改权重
+            document.querySelectorAll('.rate-input').forEach(input => {
+                input.oninput = e => {
+                    const i = Number(e.target.dataset.idx);
+                    let val = Number(e.target.value);
+                    if(val < 1) val = 1;
+                    prizeList[i].rate = val;
+                    drawWheel();
+                }
+            })
+            // 删除按钮
+            document.querySelectorAll('.del-btn').forEach(btn => {
+                btn.onclick = e => {
+                    const i = Number(e.target.dataset.idx);
+                    if(prizeList.length <= 2) {
+                        alert("至少保留2个奖项！");
+                        return;
+                    }
+                    prizeList.splice(i, 1);
+                    renderItemDom();
+                }
+            })
+        }
+        // 添加奖项
+        addItemBtn.onclick = () => {
+            prizeList.push({ text: "新奖项", rate: 5 });
+            renderItemDom();
+        }
+        // 绘制转盘
+        function drawWheel() {
+            const totalRate = prizeList.reduce((sum, p) => sum + p.rate, 0);
+            const radius = canvas.width / 2;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.save();
+            ctx.translate(radius, radius);
+            ctx.rotate(rotateAngle * Math.PI / 180);
+            let startRad = 0;
+            prizeList.forEach((prize, idx) => {
+                // 当前区块角度
+                const ratePercent = prize.rate / totalRate;
+                const endRad = startRad + Math.PI * 2 * ratePercent;
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.arc(0,0,radius-10, startRad, endRad);
+                ctx.fillStyle = colorList[idx % colorList.length];
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // 绘制文字
+                const midRad = startRad + (endRad - startRad) / 2;
+                ctx.save();
+                ctx.rotate(midRad);
+                ctx.font = "bold 16px Microsoft Yahei";
+                ctx.fillStyle = "#000";
+                ctx.textAlign = "center";
+                ctx.fillText(prize.text, radius * 0.6, 6);
+                ctx.restore();
+                startRad = endRad;
+            })
+            ctx.restore();
+        }
+        // 随机抽取奖项（按权重概率）
+        function getRandomPrize() {
+            const total = prizeList.reduce((s,p)=>s+p.rate,0);
+            let random = Math.random() * total;
+            for(let p of prizeList) {
+                random -= p.rate;
+                if(random <= 0) return p;
+            }
+            return prizeList[prizeList.length-1];
+        }
+        // 旋转动画
+        function spinWheel() {
+            if(isRunning) return;
+            if(prizeList.length < 2) {
+                alert("请至少添加两个奖项！");
+                return;
+            }
+            isRunning = true;
+            startBtn.disabled = true;
+            const targetPrize = getRandomPrize();
+            // 计算目标角度
+            const totalRate = prizeList.reduce((s,p)=>s+p.rate,0);
+            let currentAngle = 0;
+            let targetAngle = 0;
+            // 找到该奖项所占区间
+            for(let p of prizeList) {
+                const ang = 360 * p.rate / totalRate;
+                if(p === targetPrize) {
+                    // 指针停在区块中间
+                    targetAngle = currentAngle + ang / 2;
+                    break;
+                }
+                currentAngle += ang;
+            }
+            // 多转5圈再停
+            const fullTurn = 360 * 5;
+            const endRotate = rotateAngle + fullTurn + (360 - targetAngle);
+            // 缓动动画
+            let speed = 12;
+            function animate() {
+                rotateAngle += speed;
+                drawWheel();
+                // 减速停止
+                const diff = Math.abs(endRotate - rotateAngle);
+                if(diff < 1) {
+                    rotateAngle = endRotate;
+                    drawWheel();
+                    isRunning = false;
+                    startBtn.disabled = false;
+                    showResult(targetPrize.text);
+                    return;
+                }
+                speed = diff / 80;
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        startBtn.onclick = spinWheel;
+        function showResult(text) {
+            resultText.innerText = text;
+            mask.style.display = "flex";
+        }
+        function closeMask() {
+            mask.style.display = "none";
+        }
+        // 初始化渲染
+        renderItemDom();
+</script>
+</body>
+</html>

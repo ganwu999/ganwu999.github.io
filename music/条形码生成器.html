@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>条形码生成器-二维码图片导入解析</title>
+  <!-- 依赖库 -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsqr.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb',
+            dark: '#1e293b',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .card-shadow {
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08), 0 4px 10px -4px rgba(0,0,0,0.05);
+      }
+      .input-focus {
+        @apply border-primary ring-2 ring-primary/20 outline-none;
+      }
+      .btn-hover {
+        @apply transition-all duration-200 hover:shadow-lg active:scale-95;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen py-8 px-4 md:px-8">
+  <div class="max-w-5xl mx-auto">
+    <header class="text-center mb-10">
+      <h1 class="text-[clamp(1.8rem,4vw,2.6rem)] font-bold text-dark flex items-center justify-center gap-3">
+        <i class="fa fa-barcode text-primary"></i>
+        在线条形码生成器
+      </h1>
+      <p class="text-slate-500 mt-2">支持上传二维码图片解析内容，本地生成条码无水印</p>
+    </header>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- 左侧配置面板 -->
+      <div class="bg-white rounded-xl p-6 card-shadow">
+        <h2 class="text-lg font-semibold mb-5 flex items-center gap-2">
+          <i class="fa fa-sliders text-primary"></i>参数设置
+        </h2>
+
+        <!-- 二维码图片导入区域【新增】 -->
+        <div class="mb-5 p-4 border border-dashed border-primary/40 rounded-lg bg-primary/5">
+          <label class="block text-sm font-medium text-primary mb-2">
+            <i class="fa fa-qrcode mr-1"></i>上传二维码图片自动解析
+          </label>
+          <input type="file" id="qrFileInput" accept="image/*" class="w-full text-sm">
+          <p class="text-xs text-slate-500 mt-1">上传图片识别二维码文本，自动填入下方输入框</p>
+        </div>
+
+        <!-- 条码内容 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-700 mb-1">条码内容</label>
+          <textarea id="barText" rows="3" placeholder="输入数字/字母，EAN13仅支持13位数字"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:input-focus resize-none"></textarea>
+        </div>
+
+        <!-- 条码类型 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-700 mb-1">条码格式</label>
+          <select id="barType" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:input-focus">
+            <option value="CODE128">CODE128（通用，数字字母符号）</option>
+            <option value="EAN13">EAN13（商品13位纯数字）</option>
+            <option value="UPC">UPC-A（北美商品12位数字）</option>
+            <option value="CODE39">CODE39（工业物流字母数字）</option>
+          </select>
+        </div>
+
+        <!-- 尺寸设置 -->
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">条码宽度</label>
+            <input type="number" id="barWidth" value="2" min="1" max="5"
+              class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:input-focus">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">条码高度</label>
+            <input type="number" id="barHeight" value="80" min="30" max="150"
+              class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:input-focus">
+          </div>
+        </div>
+
+        <!-- 颜色 -->
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">条码颜色</label>
+            <input type="color" id="barColor" value="#000000" class="w-full h-10 rounded border border-slate-300">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">背景颜色</label>
+            <input type="color" id="bgColor" value="#ffffff" class="w-full h-10 rounded border border-slate-300">
+          </div>
+        </div>
+
+        <!-- 显示文字开关 -->
+        <div class="mb-6 flex items-center gap-2">
+          <input type="checkbox" id="showText" checked class="w-4 h-4 accent-primary">
+          <label for="showText" class="text-sm text-slate-700">显示底部数字文字</label>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="grid grid-cols-2 gap-3">
+          <button id="genBtn" class="bg-primary text-white py-3 rounded-lg font-medium btn-hover flex justify-center items-center gap-2">
+            <i class="fa fa-magic"></i>生成条码
+          </button>
+          <button id="clearBtn" class="bg-slate-200 text-slate-700 py-3 rounded-lg font-medium btn-hover flex justify-center items-center gap-2">
+            <i class="fa fa-eraser"></i>清空全部
+          </button>
+        </div>
+      </div>
+
+      <!-- 右侧预览下载 -->
+      <div class="bg-white rounded-xl p-6 card-shadow flex flex-col">
+        <h2 class="text-lg font-semibold mb-5 flex items-center gap-2">
+          <i class="fa fa-eye text-primary"></i>预览与下载
+        </h2>
+
+        <div id="previewBox" class="flex-1 min-h-[260px] border border-dashed border-slate-300 rounded-lg flex items-center justify-center p-4 mb-5 bg-slate-50">
+          <span class="text-slate-400 text-center">输入内容/上传二维码图片<br>点击生成条码预览</span>
+          <svg id="barcode" class="hidden max-w-full"></svg>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button id="downloadPng" disabled class="bg-emerald-600 text-white py-3 rounded-lg font-medium btn-hover flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fa fa-download"></i>下载PNG
+          </button>
+          <button id="downloadSvg" disabled class="bg-orange-500 text-white py-3 rounded-lg font-medium btn-hover flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fa fa-file-code-o"></i>下载SVG矢量
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="mt-10 text-center text-slate-400 text-sm">
+      纯前端本地解析/生成 · 图片与文本不上传服务器 · 无广告无水印
+    </footer>
+  </div>
+
+  <script>
+    const barText = document.getElementById('barText');
+    const barType = document.getElementById('barType');
+    const barWidth = document.getElementById('barWidth');
+    const barHeight = document.getElementById('barHeight');
+    const barColor = document.getElementById('barColor');
+    const bgColor = document.getElementById('bgColor');
+    const showText = document.getElementById('showText');
+    const genBtn = document.getElementById('genBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const barcodeSvg = document.getElementById('barcode');
+    const previewBox = document.getElementById('previewBox');
+    const downloadPng = document.getElementById('downloadPng');
+    const downloadSvg = document.getElementById('downloadSvg');
+    const qrFileInput = document.getElementById('qrFileInput');
+    let svgRaw = '';
+
+    // 【新增】上传二维码图片解析逻辑
+    qrFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (ev) => {
+        img.src = ev.target.result;
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const qrCode = jsqr(imgData.data, imgData.width, imgData.height);
+          if (qrCode) {
+            barText.value = qrCode.data;
+            alert('二维码解析成功，内容已自动填入输入框！');
+          } else {
+            alert('未识别到有效二维码，请更换清晰图片重试');
+          }
+          qrFileInput.value = '';
+        }
+      }
+    });
+
+    // 生成条码
+    function generateBarcode() {
+      const text = barText.value.trim();
+      if (!text) {
+        alert('请输入条码内容或上传二维码图片解析内容');
+        return;
+      }
+      try {
+        barcodeSvg.classList.remove('hidden');
+        previewBox.querySelector('span')?.remove();
+        JsBarcode("#barcode", text, {
+          format: barType.value,
+          width: Number(barWidth.value),
+          height: Number(barHeight.value),
+          lineColor: barColor.value,
+          background: bgColor.value,
+          displayValue: showText.checked,
+          margin: 10
+        });
+        svgRaw = barcodeSvg.outerHTML;
+        downloadPng.disabled = false;
+        downloadSvg.disabled = false;
+      } catch (err) {
+        alert('生成失败：当前内容不匹配所选条码格式，请更换内容或条码类型');
+        resetPreview();
+      }
+    }
+
+    // 重置预览区域
+    function resetPreview() {
+      barcodeSvg.classList.add('hidden');
+      downloadPng.disabled = true;
+      downloadSvg.disabled = true;
+      svgRaw = '';
+      if (!previewBox.querySelector('span')) {
+        previewBox.innerHTML = `<span class="text-slate-400 text-center">输入内容/上传二维码图片<br>点击生成条码预览</span><svg id="barcode" class="hidden max-w-full"></svg>`;
+      }
+    }
+
+    // 清空所有参数
+    function clearAll() {
+      barText.value = '';
+      barType.value = 'CODE128';
+      barWidth.value = 2;
+      barHeight.value = 80;
+      barColor.value = '#000000';
+      bgColor.value = '#ffffff';
+      showText.checked = true;
+      qrFileInput.value = '';
+      resetPreview();
+    }
+
+    // 下载PNG高清图
+    function downloadPNG() {
+      const svgBlob = new Blob([svgRaw], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * 3;
+        canvas.height = img.height * 3;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = bgColor.value;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        const link = document.createElement('a');
+        link.download = '条形码.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+
+    // 下载SVG矢量文件
+    function downloadSVG() {
+      const blob = new Blob([svgRaw], {type: 'image/svg+xml;charset=utf-8'});
+      const link = document.createElement('a');
+      link.download = '条形码.svg';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // 绑定事件
+    genBtn.addEventListener('click', generateBarcode);
+    clearBtn.addEventListener('click', clearAll);
+    downloadPng.addEventListener('click', downloadPNG);
+    downloadSvg.addEventListener('click', downloadSVG);
+  </script>
+</body>
+</html>

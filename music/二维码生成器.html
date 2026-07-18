@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二维码生成器-感悟</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<script>
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                main: "#4f46e5",
+                cardLight: "#f9fafb",
+                cardDark: "#1f2937",
+                bgLight: "#ffffff",
+                bgDark: "#111827"
+            }
+        }
+    }
+}
+</script>
+<style type="text/tailwindcss">
+@layer utilities {
+    .all-smooth { transition: all 0.26s ease-out; }
+    .btn-active { @apply all-smooth hover:shadow-lg active:scale-[0.96]; }
+    .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+    .dark .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); }
+}
+html { scroll-behavior: smooth; }
+.toast-pop { animation: toastAnim 2s ease forwards; }
+@keyframes toastAnim {
+    0% { opacity: 0; transform: translateY(10px) scale(0.94); }
+    10% { opacity: 1; transform: translateY(0) scale(1); }
+    90% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(10px) scale(0.94); }
+}
+body {background: linear-gradient(150deg,#f0f4ff,#f8faff); min-height:100vh;}
+.dark body {background: linear-gradient(150deg,#0f172a,#1e1b4b);}
+::-webkit-scrollbar {width:6px;height:6px;}
+::-webkit-scrollbar-thumb {background:#94a3b8;border-radius:3px;}
+
+/* 圆环入场动画样式 */
+.anim-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #080812;
+  z-index: 9999;
+  animation: maskSlideLeft 1.2s linear 4.2s forwards;
+}
+@keyframes maskSlideLeft {
+  to { transform: translateX(-100vw); }
+}
+.ring-box {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  border: 2px solid #60a5fa;
+  border-radius: 50%;
+  opacity: 0;
+}
+.ring-center {
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: centerRing 1.2s ease-out forwards;
+}
+@keyframes centerRing {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.r1 { width: 80px; height: 80px; animation: r1Move 1.8s ease-out 1.2s forwards; }
+.r2 { width: 60px; height: 60px; animation: r2Move 1.8s ease-out 1.2s forwards; }
+.r3 { width: 100px; height: 100px; animation: r3Move 1.8s ease-out 1.2s forwards; }
+.r4 { width: 70px; height: 70px; animation: r4Move 1.8s ease-out 1.2s forwards; }
+@keyframes r1Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:15%;left:20%;transform:translate(-50%,-50%) scale(0.8);opacity:0.7; }
+}
+@keyframes r2Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:75%;left:80%;transform:translate(-50%,-50%) scale(0.6);opacity:0.5; }
+}
+@keyframes r3Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:20%;left:78%;transform:translate(-50%,-50%) scale(0.9);opacity:0.6; }
+}
+@keyframes r4Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:80%;left:18%;transform:translate(-50%,-50%) scale(0.7);opacity:0.4; }
+}
+.text-ganwu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 5rem;
+  color: #e0efff;
+  font-weight: bold;
+  transform: translate(-50%, -50%) scale(0.1);
+  opacity: 0;
+  animation: textIn 1.2s ease-out 3s forwards;
+}
+@keyframes textIn {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+</style>
+</head>
+<body class="all-smooth">
+<div id="toastWrap" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800 dark:text-white">文字/网址二维码生成器</h1>
+        </div>
+        <button id="switchDark" class="w-10 h-10 rounded-full bg-cardLight dark:bg-cardDark flex items-center justify-center btn-active card-shadow">
+            <i class="fa fa-moon-o dark:hidden text-slate-700"></i>
+            <i class="fa fa-sun-o hidden dark:block text-slate-300"></i>
+        </button>
+    </div>
+    <div class="rounded-xl bg-bgLight dark:bg-bgDark p-5 card-shadow mb-4">
+        <label class="block font-medium mb-2 text-slate-800 dark:text-slate-100">文本/网址</label>
+        <textarea id="inputText" rows="3" placeholder="输入需要生成二维码的文字、链接"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-cardLight dark:bg-cardDark all-smooth focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:text-white resize-none"></textarea>
+    </div>
+    <div class="rounded-xl bg-bgLight dark:bg-bgDark p-5 card-shadow mb-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm text-slate-500 dark:text-slate-400 block mb-2">画布尺寸（最大8000px）</label>
+                <select id="sizeSelect" class="w-full px-3 py-2 rounded-lg bg-cardLight dark:bg-cardDark border border-slate-200 dark:text-white">
+                    <option value="50">50px 迷你贴纸</option>
+                    <option value="100">100px 小图标</option>
+                    <option value="300">300px 卡片</option>
+                    <option value="1000" selected>1000px 常规</option>
+                    <option value="2000">2000px 海报</option>
+                    <option value="4000">4000px 巨幅写真</option>
+                    <option value="8000">8000px 极限超清喷绘</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-sm text-slate-500 dark:text-slate-400 block mb-2">容错等级</label>
+                <select id="levelSelect" class="w-full px-3 py-2 rounded-lg bg-cardLight dark:bg-cardDark border border-slate-200 dark:text-white">
+                    <option value="L">低容错</option>
+                    <option value="M">均衡</option>
+                    <option value="Q">高容错</option>
+                    <option value="H" selected>超高容错（打印推荐）</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <button id="genNormalBtn" class="w-full py-4 rounded-xl bg-main text-white btn-active text-lg font-bold mb-4">
+        <i class="fa fa-qrcode mr-2"></i>生成二维码
+    </button>
+    <div class="grid grid-cols-3 gap-2 mb-4">
+        <button id="downloadPngBtn" class="py-3 rounded-lg bg-emerald-500 text-white btn-active hidden">下载PNG</button>
+        <button id="copyTextBtn" class="py-3 rounded-lg bg-cardLight dark:bg-cardDark btn-active text-slate-700 dark:text-slate-200 hidden">复制内容</button>
+        <button id="clearAllBtn" class="py-3 rounded-lg bg-slate-200 dark:bg-slate-800 btn-active text-slate-700 dark:text-slate-300">一键清空</button>
+    </div>
+    <div class="rounded-xl bg-bgLight dark:bg-bgDark p-5 card-shadow mb-4 overflow-x-auto">
+        <div class="flex justify-center min-w-max">
+            <canvas id="qrCanvas" class="hidden rounded-lg"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- 入场动画遮罩层 -->
+<div class="anim-mask">
+  <div class="ring-box">
+    <div class="ring ring-center"></div>
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="ring r4"></div>
+  </div>
+  <div class="text-ganwu">感悟</div>
+</div>
+
+<script>
+const switchDark = document.getElementById("switchDark");
+const inputText = document.getElementById("inputText");
+const sizeSelect = document.getElementById("sizeSelect");
+const levelSelect = document.getElementById("levelSelect");
+const genNormalBtn = document.getElementById("genNormalBtn");
+const downloadPngBtn = document.getElementById("downloadPngBtn");
+const copyTextBtn = document.getElementById("copyTextBtn");
+const clearAllBtn = document.getElementById("clearAllBtn");
+const qrCanvas = document.getElementById("qrCanvas");
+const toastWrap = document.getElementById("toastWrap");
+let lastQrContent = "";
+// 深色模式
+if(localStorage.getItem("darkMode") === "1" || (!localStorage.getItem("darkMode") && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    document.documentElement.classList.add("dark");
+}
+switchDark.onclick = () => {
+    document.documentElement.classList.toggle("dark");
+    localStorage.setItem("darkMode", document.documentElement.classList.contains("dark") ? "1" : "0");
+}
+// 提示弹窗
+function showMsg(txt) {
+    const dom = document.createElement("div");
+    dom.className = "px-4 py-3 rounded-lg bg-emerald-500 text-white toast-pop";
+    dom.innerText = txt;
+    toastWrap.appendChild(dom);
+    setTimeout(() => dom.remove(), 2000);
+}
+// 复制文本
+async function copyStr(str) {
+    try {
+        await navigator.clipboard.writeText(str);
+        showMsg("复制成功");
+    }catch(e){
+        const t = document.createElement("textarea");
+        t.value = str;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand("copy");
+        t.remove();
+        showMsg("感悟牛逼");
+    }
+}
+// 生成二维码
+async function renderQr(content) {
+    lastQrContent = content;
+    const size = Number(sizeSelect.value);
+    const level = levelSelect.value;
+    const dark = document.documentElement.classList.contains("dark");
+    const cfg = {
+        width: size, height: size, margin: 8,
+        errorCorrectionLevel: level,
+        color:{ dark: dark?"#e4e7ed":"#000", light: dark?"#1f2937":"#fff" }
+    };
+    showMsg(`正在生成${size}px二维码`);
+    try{
+        await QRCode.toCanvas(qrCanvas, content, cfg);
+        qrCanvas.classList.remove("hidden");
+        downloadPngBtn.classList.remove("hidden");
+        copyTextBtn.classList.remove("hidden");
+        showMsg("生成成功");
+    }catch(err){
+        showMsg("生成失败："+err.message);
+        console.error(err);
+    }
+}
+genNormalBtn.onclick = () => {
+    const txt = inputText.value.trim();
+    if(!txt) return showMsg("请输入文本或链接");
+    renderQr(txt);
+}
+// 下载
+downloadPngBtn.onclick = () => {
+    const a = document.createElement("a");
+    a.download = `二维码_${sizeSelect.value}px.png`;
+    a.href = qrCanvas.toDataURL("image/png");
+    a.click();
+}
+copyTextBtn.onclick = ()=>copyStr(lastQrContent);
+// 清空全部
+clearAllBtn.onclick = () => {
+    inputText.value = "";
+    qrCanvas.classList.add("hidden");
+    downloadPngBtn.classList.add("hidden");
+    copyTextBtn.classList.add("hidden");
+    lastQrContent = "";
+    showMsg("已清空");
+}
+</script>
+</body>
+</html>

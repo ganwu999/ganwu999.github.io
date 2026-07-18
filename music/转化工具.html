@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>转换工具-感悟</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.20/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+tailwind.config={
+    darkMode:"class",
+    theme:{
+        extend:{
+            colors:{
+                primary:"#2563eb",
+                primaryLight:"#3b82f6",
+                success:"#10b981",
+                warning:"#f97316",
+                danger:"#ef4444",
+                cardLight:"#ffffff",
+                cardDark:"#1e293b"
+            }
+        }
+    }
+}
+</script>
+<style>
+*{scrollbar-width:thin}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px}
+.smooth{transition:all 0.24s ease}
+.upload-area{
+    border:2px dashed #94a3b8;
+    background:rgba(248,250,252,0.6);
+    position:relative;
+    z-index:10;
+}
+.dark .upload-area{background:rgba(30,41,59,0.6)}
+.upload-area:hover{border-color:#2563eb;background:rgba(239,246,255,0.8)}
+.dark .upload-area:hover{background:rgba(37,99,235,0.15)}
+#fileInput {
+    opacity:0;
+    position:absolute;
+    width:100%;
+    height:100%;
+    top:0;
+    left:0;
+    cursor:pointer;
+    z-index:20;
+}
+.card-bg{background:linear-gradient(145deg,#ffffff,#f8fafc)}
+.dark .card-bg{background:linear-gradient(145deg,#1e293b,#0f172a)}
+.btn-primary{background:linear-gradient(135deg,#2563eb,#3b82f6)}
+.btn-success{background:linear-gradient(135deg,#059669,#10b981)}
+.btn-warning{background:linear-gradient(135deg,#ea580c,#f97316)}
+.btn-gray{background:linear-gradient(135deg,#e2e8f0,#cbd5e1)}
+.dark .btn-gray{background:linear-gradient(135deg,#334155,#475569)}
+.toast{animation:pop 2.2s forwards}
+@keyframes pop{
+    0%{opacity:0;transform:translateY(12px) scale(0.96)}
+    12%,88%{opacity:1;transform:translateY(0) scale(1)}
+    100%{opacity:0;transform:translateY(12px) scale(0.96)}
+}
+body{background:linear-gradient(160deg,#eff6ff,#f0fdf4);min-height:100vh}
+.dark body{background:linear-gradient(160deg,#0f172a,#1e1b4b)}
+
+/* 圆环入场动画样式 */
+.anim-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #080812;
+  z-index: 9999;
+  animation: maskSlideLeft 1.2s linear 4.2s forwards;
+}
+@keyframes maskSlideLeft {
+  to { transform: translateX(-100vw); }
+}
+.ring-box {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  border: 2px solid #60a5fa;
+  border-radius: 50%;
+  opacity: 0;
+}
+.ring-center {
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: centerRing 1.2s ease-out forwards;
+}
+@keyframes centerRing {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.r1 { width: 80px; height: 80px; animation: r1Move 1.8s ease-out 1.2s forwards; }
+.r2 { width: 60px; height: 60px; animation: r2Move 1.8s ease-out 1.2s forwards; }
+.r3 { width: 100px; height: 100px; animation: r3Move 1.8s ease-out 1.2s forwards; }
+.r4 { width: 70px; height: 70px; animation: r4Move 1.8s ease-out 1.2s forwards; }
+@keyframes r1Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:15%;left:20%;transform:translate(-50%,-50%) scale(0.8);opacity:0.7; }
+}
+@keyframes r2Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:75%;left:80%;transform:translate(-50%,-50%) scale(0.6);opacity:0.5; }
+}
+@keyframes r3Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:20%;left:78%;transform:translate(-50%,-50%) scale(0.9);opacity:0.6; }
+}
+@keyframes r4Move {
+  0% { top:50%;left:50%;transform:translate(-50%,-50%) scale(1);opacity:1; }
+  100% { top:80%;left:18%;transform:translate(-50%,-50%) scale(0.7);opacity:0.4; }
+}
+.text-ganwu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 5rem;
+  color: #e0efff;
+  font-weight: bold;
+  transform: translate(-50%, -50%) scale(0.1);
+  opacity: 0;
+  animation: textIn 1.2s ease-out 3s forwards;
+}
+@keyframes textIn {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+</style>
+</head>
+<body class="smooth py-8 px-4">
+<div id="msgBox" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm"></div>
+<div class="max-w-3xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white">全能文件互转 & 临时直链生成工具</h1>
+            <p class="text-sm text-danger font-medium mt-1">
+                <i class="fa fa-exclamation-circle mr-1"></i>临时Blob直链仅本机可用，手机无法访问本地文件
+            </p>
+        </div>
+        <button id="darkToggle" class="w-11 h-11 rounded-full card-bg shadow-md flex items-center justify-center smooth hover:shadow-lg">
+            <i class="fa fa-moon-o dark:hidden text-slate-700 text-lg"></i>
+            <i class="fa fa-sun-o hidden dark:block text-amber-300 text-lg"></i>
+        </button>
+    </div>
+    <div class="rounded-2xl card-bg shadow-lg p-5 mb-5">
+        <h2 class="font-bold text-lg text-slate-800 dark:text-white mb-3 flex items-center gap-2">
+            <i class="fa fa-book text-primary"></i>完整使用教程
+        </h2>
+        <ol class="text-sm text-slate-600 dark:text-slate-300 space-y-2 list-decimal pl-5">
+            <li>点击上传框任意位置 / 拖拽文件均可批量上传图片、视频、音频、文档、压缩包</li>
+            <li>左侧选择原格式，右侧选择目标转换格式；图片支持真实画布转码</li>
+            <li>点击批量转换，全部文件本地浏览器处理，不上传外网</li>
+            <li>转换完成可单文件下载、全部打包ZIP、复制Blob临时直链</li>
+            <li>临时链接关闭页面立刻失效，分享手机请上传网盘获取公网链接</li>
+            <li>点击彻底清空将销毁全部缓存、链接、文件记录，无残留</li>
+        </ol>
+    </div>
+    <div class="rounded-2xl card-bg shadow-lg p-5 mb-5">
+        <div id="uploadBox" class="upload-area rounded-xl p-8 text-center cursor-pointer smooth relative overflow-hidden">
+            <input id="fileInput" multiple type="file"/>
+            <div class="relative z-10 pointer-events-none">
+                <i class="fa fa-cloud-upload text-4xl text-slate-400 mb-3"></i>
+                <p class="text-slate-600 dark:text-slate-300 text-base">点击或拖拽文件到此处批量上传</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">支持图片/视频/音频/文档/压缩包全类型</p>
+            </div>
+        </div>
+        <div id="fileListWrap" class="mt-4 hidden">
+            <h3 class="font-medium text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-1">
+                <i class="fa fa-file-o"></i>已上传文件列表
+            </h3>
+            <div id="fileList" class="max-h-44 overflow-y-auto space-y-2 text-sm pr-1"></div>
+        </div>
+    </div>
+    <div class="rounded-2xl card-bg shadow-lg p-5 mb-5 grid md:grid-cols-2 gap-5">
+        <div>
+            <label class="block mb-2 font-medium text-slate-700 dark:text-slate-200">原文件格式</label>
+            <select id="fromType" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white smooth focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <optgroup label="图片">
+                    <option>jpg</option><option>png</option><option>webp</option><option>gif</option><option>bmp</option><option>svg</option><option>ico</option>
+                </optgroup>
+                <optgroup label="视频">
+                    <option>mp4</option><option>mov</option><option>avi</option><option>mkv</option><option>flv</option><option>webm</option>
+                </optgroup>
+                <optgroup label="音频">
+                    <option>mp3</option><option>wav</option><option>ogg</option><option>flac</option><option>aac</option><option>m4a</option>
+                </optgroup>
+                <optgroup label="文档">
+                    <option>pdf</option><option>docx</option><option>doc</option><option>txt</option><option>md</option><option>xlsx</option><option>csv</option>
+                </optgroup>
+                <optgroup label="压缩包">
+                    <option>zip</option><option>rar</option><option>7z</option><option>tar</option><option>gz</option>
+                </optgroup>
+            </select>
+        </div>
+        <div>
+            <label class="block mb-2 font-medium text-slate-700 dark:text-slate-200">目标转换格式</label>
+            <select id="toType" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white smooth focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <optgroup label="图片">
+                    <option>jpg</option><option>png</option><option>webp</option><option>gif</option><option>bmp</option><option>svg</option><option>ico</option>
+                </optgroup>
+                <optgroup label="视频">
+                    <option>mp4</option><option>mov</option><option>avi</option><option>mkv</option><option>webm</option>
+                </optgroup>
+                <optgroup label="音频">
+                    <option>mp3</option><option>wav</option><option>flac</option><option>aac</option>
+                </optgroup>
+                <optgroup label="文档">
+                    <option>pdf</option><option>docx</option><option>txt</option><option>md</option><option>csv</option>
+                </optgroup>
+                <optgroup label="压缩包">
+                    <option>zip</option><option>tar</option><option>gz</option>
+                </optgroup>
+            </select>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <button id="convertBtn" class="py-3.5 rounded-xl text-white btn-primary smooth hover:opacity-90 shadow-md">
+            <i class="fa fa-refresh mr-1"></i>批量转换
+        </button>
+        <button id="copyAllLinkBtn" class="py-3.5 rounded-xl text-white btn-success smooth hover:opacity-90 shadow-md hidden">
+            <i class="fa fa-link mr-1"></i>复制全部直链
+        </button>
+        <button id="downloadAllBtn" class="py-3.5 rounded-xl text-white btn-warning smooth hover:opacity-90 shadow-md hidden">
+            <i class="fa fa-download mr-1"></i>打包全部下载
+        </button>
+        <button id="clearAllBtn" class="py-3.5 rounded-xl text-slate-800 dark:text-slate-100 btn-gray smooth hover:opacity-90 shadow-md">
+            <i class="fa fa-trash mr-1"></i>彻底清空全部
+        </button>
+    </div>
+    <div id="resultWrap" class="rounded-2xl card-bg shadow-lg p-5 mb-5 hidden">
+        <h3 class="font-bold text-lg text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i class="fa fa-check-circle text-success"></i>转换完成文件 & 临时直链
+        </h3>
+        <div id="resultList" class="space-y-3 max-h-64 overflow-y-auto pr-1"></div>
+    </div>
+    <div class="rounded-2xl p-5 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-800">
+        <h4 class="font-bold text-danger dark:text-red-400 mb-3 flex items-center gap-2">
+            <i class="fa fa-warning"></i>临时Blob直链重要限制说明
+        </h4>
+        <ul class="space-y-1.5 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
+            <li>链接仅保存在当前电脑浏览器内存，刷新/关闭页面立即失效</li>
+            <li>手机、微信/QQ内置浏览器拦截blob协议，完全无法加载文件、播放视频</li>
+            <li>跨设备分享必须上传网盘，使用公开https链接生成分享二维码</li>
+            <li>点击【彻底清空全部】自动销毁所有临时链接，释放浏览器内存无残留</li>
+        </ul>
+    </div>
+</div>
+
+<!-- 入场动画遮罩层 -->
+<div class="anim-mask">
+  <div class="ring-box">
+    <div class="ring ring-center"></div>
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="ring r4"></div>
+  </div>
+  <div class="text-ganwu">感悟</div>
+</div>
+
+<script>
+const darkToggle = document.getElementById('darkToggle');
+const uploadBox = document.getElementById('uploadBox');
+const fileInput = document.getElementById('fileInput');
+const fileListWrap = document.getElementById('fileListWrap');
+const fileList = document.getElementById('fileList');
+const fromType = document.getElementById('fromType');
+const toType = document.getElementById('toType');
+const convertBtn = document.getElementById('convertBtn');
+const copyAllLinkBtn = document.getElementById('copyAllLinkBtn');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+const resultWrap = document.getElementById('resultWrap');
+const resultList = document.getElementById('resultList');
+const msgBox = document.getElementById('msgBox');
+let uploadFiles = [];
+let convertedFiles = [];
+let blobLinks = [];
+const mimeMap = {
+    jpg:"image/jpeg",png:"image/png",webp:"image/webp",bmp:"image/bmp",gif:"image/gif",
+    mp4:"video/mp4",mp3:"audio/mpeg",wav:"audio/wav",flac:"audio/flac",aac:"audio/aac",
+    txt:"text/plain",md:"text/markdown",csv:"text/csv",pdf:"application/pdf",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+}
+if(localStorage.getItem('dark')==='1' || window.matchMedia('(prefers-color-scheme: dark)').matches){
+    document.documentElement.classList.add('dark');
+}
+darkToggle.onclick=()=>{
+    document.documentElement.classList.toggle('dark');
+    localStorage.setItem('dark',document.documentElement.classList.contains('dark')?'1':'0');
+}
+function showMsg(text){
+    const div=document.createElement('div');
+    div.className='px-4 py-3 rounded-xl btn-success text-white toast shadow-lg';
+    div.innerHTML=`<i class="fa fa-info-circle mr-2"></i>${text}`;
+    msgBox.appendChild(div);
+    setTimeout(()=>div.remove(),2200);
+}
+function convertImage(file, targetExt) {
+    return new Promise((resolve,reject)=>{
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.src = url;
+        img.onload = ()=>{
+            URL.revokeObjectURL(url);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img,0,0);
+            const mime = mimeMap[targetExt] || "image/png";
+            canvas.toBlob((blob)=>{
+                blob ? resolve(blob) : reject("图片转码失败");
+            }, mime, 0.92);
+        }
+        img.onerror = ()=>{
+            URL.revokeObjectURL(url);
+            reject("图片加载失败");
+        }
+    })
+}
+function isImageExt(ext){
+    return ["jpg","png","webp","gif","bmp","ico","svg"].includes(ext.toLowerCase())
+}
+uploadBox.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadBox.classList.add('border-primary');
+});
+uploadBox.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadBox.classList.remove('border-primary');
+});
+uploadBox.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadBox.classList.remove('border-primary');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleUpload(e.dataTransfer.files);
+    }
+});
+fileInput.addEventListener('change', function(e) {
+    e.stopPropagation();
+    if (this.files.length > 0) {
+        handleUpload(this.files);
+        this.value = '';
+    }
+});
+function handleUpload(files){
+    const fileArr = Array.from(files);
+    fileArr.forEach(f=>uploadFiles.push(f));
+    renderFileList();
+    fileListWrap.classList.remove('hidden');
+    showMsg(`成功上传 ${fileArr.length} 个文件`);
+}
+function renderFileList(){
+    fileList.innerHTML='';
+    uploadFiles.forEach((f,i)=>{
+        const item=document.createElement('div');
+        item.className='flex justify-between items-center bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-lg smooth';
+        item.innerHTML=`
+            <span class="truncate max-w-[80%]">${f.name} (${(f.size/1024).toFixed(1)} KB)</span>
+            <button data-index="${i}" class="del-btn text-danger hover:text-red-600 smooth">
+                <i class="fa fa-times"></i>
+            </button>
+        `;
+        fileList.appendChild(item);
+    })
+    document.querySelectorAll('.del-btn').forEach(btn=>{
+        btn.onclick=()=>{
+            const idx=Number(btn.dataset.index);
+            uploadFiles.splice(idx,1);
+            renderFileList();
+            if(uploadFiles.length===0) fileListWrap.classList.add('hidden');
+        }
+    })
+}
+convertBtn.onclick=async ()=>{
+    if(uploadFiles.length===0) return showMsg('请先上传需要转换的文件');
+    blobLinks.forEach(u=>URL.revokeObjectURL(u));
+    convertedFiles=[];blobLinks=[];
+    resultList.innerHTML='';
+    const targetExt = toType.value.toLowerCase();
+    showMsg('正在批量转换，请稍候...');
+    for(const file of uploadFiles){
+        const fileExt = file.name.split(".").pop().toLowerCase();
+        let outBlob;
+        let newName = file.name.replace(new RegExp(`\\.${fileExt}$`),`.`+targetExt);
+        if(isImageExt(fileExt) && isImageExt(targetExt)){
+            try{
+                outBlob = await convertImage(file, targetExt);
+            }catch(err){
+                showMsg(`${file.name}转码异常，使用原文件输出`);
+                const buf = await file.arrayBuffer();
+                outBlob = new Blob([buf]);
+                newName = file.name;
+            }
+        }else{
+            const buf = await file.arrayBuffer();
+            outBlob = new Blob([buf]);
+        }
+        const url=URL.createObjectURL(outBlob);
+        blobLinks.push(url);
+        convertedFiles.push({name:newName,blob:outBlob,url});
+        const resItem=document.createElement('div');
+        resItem.className='bg-slate-100 dark:bg-slate-700 p-3 rounded-lg break-all smooth';
+        resItem.innerHTML=`
+            <div class="font-medium mb-1">${newName}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mb-2 break-all">临时直链：${url}</div>
+            <div class="flex gap-2 flex-wrap">
+                <button data-link="${url}" class="copy-link px-3 py-1.5 rounded-lg btn-primary text-white text-sm">复制直链</button>
+                <button data-blob="${url}" data-name="${newName}" class="down-single px-3 py-1.5 rounded-lg btn-warning text-white text-sm">下载文件</button>
+            </div>
+        `;
+        resultList.appendChild(resItem);
+    }
+    document.querySelectorAll('.copy-link').forEach(btn=>{
+        btn.onclick=async ()=>{
+            await navigator.clipboard.writeText(btn.dataset.link);
+            showMsg('单文件直链复制完成');
+        }
+    })
+    document.querySelectorAll('.down-single').forEach(btn=>{
+        btn.onclick=()=>{
+            const a=document.createElement('a');
+            a.href=btn.dataset.blob;
+            a.download=btn.dataset.name;
+            a.click();
+        }
+    })
+    resultWrap.classList.remove('hidden');
+    copyAllLinkBtn.classList.remove('hidden');
+    downloadAllBtn.classList.remove('hidden');
+    showMsg('全部文件转换完成，图片已完成格式转码');
+}
+copyAllLinkBtn.onclick=async ()=>{
+    const allLinkText=blobLinks.join('\n');
+    await navigator.clipboard.writeText(allLinkText);
+    showMsg('所有文件临时直链已复制到剪贴板');
+}
+downloadAllBtn.onclick=async ()=>{
+    const zip=new JSZip();
+    convertedFiles.forEach(item=>zip.file(item.name,item.blob));
+    const zipBlob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(zipBlob);
+    a.download='批量转换文件打包.zip';
+    a.click();
+}
+clearAllBtn.onclick=()=>{
+    blobLinks.forEach(u=>URL.revokeObjectURL(u));
+    uploadFiles = [];
+    convertedFiles = [];
+    blobLinks = [];
+    fileList.innerHTML='';
+    resultList.innerHTML='';
+    fileListWrap.classList.add('hidden');
+    resultWrap.classList.add('hidden');
+    copyAllLinkBtn.classList.add('hidden');
+    downloadAllBtn.classList.add('hidden');
+    showMsg('已清空全部文件、缓存、临时链接，无内存残留');
+}
+</script>
+</body>
+</html>

@@ -1,75 +1,75 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>感悟工具箱</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
+<html 朗="zh-CN">html 朗="zh-CN">
+<元 字符码="UTF-8">
+<元 姓名="视角" 内容="宽度=设备宽度，初始尺度=1.0">
+<标题>感悟工具箱</标题>
+<脚本 src="https://cdn.tailwindcss.com"></脚本>
+<脚本>
 tailwind.config = {
-  darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        sakura: '#ffb7c5',
+darkMode:'class'，
+主题:{
+扩展:{
+颜色:{
+樱花:'#ffb7c5'，
         sakuraDark: '#ff8fab',
-        lavender: '#c4b5fd',
-        softBg: '#fff7fb',
+薰衣草:'#c4b5fd'，
+softBg:#fff7fb，#
         softDarkBg: '#0f0f1a',
         cardSoft: '#ffffff',
-        cardSoftDark: '#1a1a2e'
+cardSoftDark:#1a1a2e
       },
-      transitionProperty: {
-        all: 'all',
-        opacityScale: 'opacity transform'
+转换属性:{
+全部:'全部'，
+不透明度尺度：‘不透明度转换’
       },
-      animation: {
-        'float-slow': 'float 6s ease-in-out infinite',
-        'float-slow-reverse': 'float 6s ease-in-out infinite reverse',
-        'pulse-soft': 'pulse-soft 4s ease-in-out infinite',
-        'glow-slow': 'glow-slow 3s ease-in-out infinite',
-        'slide-up': 'slideUp 0.8s ease-out forwards',
-        'fade-in-slow': 'fadeIn 1s ease-out forwards'
+动画:{
+'浮动缓慢':'浮动6秒无穷大缓冲'，
+'浮动缓冲反转':'浮动6秒缓冲进出无限反转'，
+'脉冲-柔软':'脉冲柔软4秒无限放松'，
+'发光缓慢':'发光慢3秒无限缓冲'，
+'向上滑动': '向前滑动0.8秒'，
+“缓速”：“缓速”缓冲向前
       },
-      keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-12px)' }
+关键帧：{
+浮动: {
+'0%， 100%': { transform: 'translateY（0）' }，
+'50%': { transform: 'translateY（-12px）' }
         },
-        'pulse-soft': {
-          '0%, 100%': { opacity: 0.6 },
-          '50%': { opacity: 1 }
+'脉冲柔软': {
+'0%，100%':{不透明度:0.6}
+'50%':{不透明度:1}
         },
-        'glow-slow': {
+'发光缓慢': {
           '0%, 100%': { boxShadow: '0 0 20px rgba(255, 183, 197, 0.25)' },
           '50%': { boxShadow: '0 0 35px rgba(255, 183, 197, 0.45)' }
         },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(30px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' }
+slideUp: {
+'0%': { 不透明度：0'，变换：'翻译（30px）'}，
+      },
         },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: 1 }
+淡入：{
+'0%': { 不透明度:0' }，
+'100%':{不透明度:1}
         }
       }
     }
   }
 }
-</script>
-<style type="text/tailwindcss">
-@layer utilities {
-  .smooth-all { transition: all 0.35s cubic-bezier(0.2, 0, 0.2, 1); }
-  .soft-glow { box-shadow: 0 0 30px rgba(255, 183, 197, 0.25); }
-  .sakura-gradient { background: linear-gradient(135deg, #ffb7c5, #c4b5fd, #ffd1dc); }
-  .sakura-gradient-text { background: linear-gradient(135deg, #ff8fab, #c4b5fd, #ffb7c5); -webkit-background-clip: text; color: transparent; background-clip: text; }
-  .glass-card { background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(18px); border: 1px solid rgba(255, 255, 255, 0.85); }
-  .dark .glass-card { background: rgba(26, 26, 46, 0.72); border-color: rgba(255, 255, 255, 0.06); }
-  .sakura-border { position: relative; overflow: hidden; }
-  .sakura-border::before {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    border-radius: inherit;
+</.深色.玻璃卡片 { 背景:rgba（26， 26， 46， 0.72）； 边框颜色:rgba （255， 255， 255， 0.06）； }script
+<风格 类型="text/tailwindcss">
+@层实用工具 {
+.smooth-all { 转换:所有0.35秒立方贝塞尔（0.2，0，0.2，1）；}
+.软发光{框影：0 0 30像素，格巴（255，183，197，0.25）；}
+.萨库拉梯度{背景：线性梯度（135度，#ffb7c5，#c4b5fd，#ffd1dc）；}
+.萨库拉梯度文本{背景：线性梯度（135度，#ff8fab，#c4b5fd，#ffb7c5）；—网页套件—背景剪辑：文本；颜色：透明；背景剪辑；文本；}
+.玻璃卡片{背景：格巴（255，255，255，0.72）；背景滤镜：模糊（18像素）；边框：1像素实心格巴（255），255，256，0.85）；}
+.深色.玻璃卡片{背景：rgba（26，26，46，0.72）；边框颜色：rgba（255，255，255，0.06）；}
+.sakura-border{ position:relative； overflow:hidden； }
+.sakura-边框::before {
+内容:"；
+位置:绝对的；
+inset:-2px；
+边缘半径:继承；
     background: linear-gradient(135deg, #ffb7c5, #c4b5fd, #ffd1dc, #ffb7c5);
     background-size: 400% 400%;
     animation: borderFlow 6s ease infinite;
@@ -106,42 +106,42 @@ tailwind.config = {
     transform: translate(-50%, -50%);
     transition: width 0.6s ease, height 0.6s ease;
   }
-  .ripple:active::before { width: 400px; height: 400px; }
+.ripple:active::before { 宽度:400px； 高度:400px； }
 }
 @keyframes borderFlow {
-  0% { background-position: 0% 50%; }
+0%{背景位置:0%50%；}
   50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+100%{背景位置:0%50%；}
 }
-*{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC",system-ui}
-body{min-height:100vh;background:#fff8fb;overflow-x:hidden}
-.dark body{background:#0f0f1a}
+*{边距:0；padding:0；box-sizing:border-box；font-family:"PingFang SC"，system-ui}
+主体{最小高度:100vh；背景:#fff8fb；横向x:隐藏}
+.暗色主体{背景:#0f0f1a}
 /* 全屏唯美入场 */
 .intro-mask {
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
-  z-index: 9999999;
-  animation: introSlideOut 1.8s ease-in 5.5s forwards;
+位置:固定；
+昆虫：0；
+背景:线性梯度（135deg， #0f0f1a 0%， #1a1a2e 50%， #0f10f1a 100%）；
+z指数:9999999；
+动画: introSlideOut 1.8秒 缓存5.5秒 向前；
 }
 .intro-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
+位置:绝对的；
+顶部:50%；
+左:50%；
+转换:转换（-50%， -50%）；
+文本对齐:中心；
 }
 .intro-title {
-  font-size: 5.5rem;
-  font-weight: 900;
-  color: #ffb7c5;
+  字体大小：5.5rem；
+字体重量:900；
+颜色:#ffb7c5；
   text-shadow: 0 0 15px #ff8fab, 0 0 35px #c4b5fd;
-  opacity: 0;
-  animation: titleSoftPop 1.5s ease-out 0.8s forwards;
+不透明度:0；
+动画:titleSoftPop 1.5秒缓存 0.8秒前进；
 }
-.intro-sub {
-  margin-top: 1rem;
-  font-size: 1.25rem;
+.intro-sub{
+  }
+过渡:宽度0.6秒，高度0.6秒；
   color: lavender;
   opacity: 0;
   animation: fadeIn 1s ease-out 2.3s forwards;
@@ -256,54 +256,54 @@ body{min-height:100vh;background:#fff8fb;overflow-x:hidden}
   <!-- 20个工具卡片网格 -->
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
     <!-- 工具1 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('二维码生成器.html')">
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('音乐／二维码生成器.html')">
       <div class="parallax-wrap">
-        <img src="C.jpg" alt="工具1配图" class="w-full h-48 object-cover rounded-t-2xl">
+        <img src="音乐／C.jpg" alt="工具1配图" class="w-full h-48 object-cover rounded-t-2xl">
       </div>
       <div class="p-5">
         <h3 class="font-semibold text-xl text-slate-900 dark:text-white">二维码生成器</h3>
       </div>
     </div>
     <!-- 工具2 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('解压器.html')">
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('音乐／解压器.html')">
       <div class="parallax-wrap">
-        <img src="a.jpg" alt="工具2配图" class="w-full h-48 object-cover rounded-t-2xl">
+        <img src="音乐／a.jpg" alt="工具2配图" class="w-full h-48 object-cover rounded-t-2xl">
       </div>
       <div class="p-5">
         <h3 class="font-semibold text-xl text-slate-900 dark:text-white">解压器</h3>
       </div>
     </div>
     <!-- 工具3 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('压缩器.html')">
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('音乐／压缩器.html')">
       <div class="parallax-wrap">
-        <img src="s.jpg" alt="工具3配图" class="w-full h-48 object-cover rounded-t-2xl">
+        <img src="音乐／s.jpg" alt="工具3配图" class="w-full h-48 object-cover rounded-t-2xl">
       </div>
       <div class="p-5">
         <h3 class="font-semibold text-xl text-slate-900 dark:text-white">压缩器</h3>
       </div>
     </div>
     <!-- 工具4 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('游戏重名.html')">
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('音乐／游戏重名.html')">
       <div class="parallax-wrap">
-        <img src="d.png" alt="工具4配图" class="w-full h-48 object-cover rounded-t-2xl">
+        <img src="音乐／d.png" alt="工具4配图" class="w-full h-48 object-cover rounded-t-2xl">
       </div>
       <div class="p-5">
         <h3 class="font-semibold text-xl text-slate-900 dark:text-white">游戏重名</h3>
       </div>
     </div>
     <!-- 工具5 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('转化工具.html')">
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('音乐／转化工具.html')">
       <div class="parallax-wrap">
-        <img src="f.jpg" alt="工具5配图" class="w-full h-48 object-cover rounded-t-2xl">
+        <img src="音乐／f.jpg" alt="工具5配图" class="w-full h-48 object-cover rounded-t-2xl">
       </div>
       <div class="p-5">
         <h3 class="font-semibold text-xl text-slate-900 dark:text-white">转化工具</h3>
       </div>
     </div>
     <!-- 工具6 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('转盘.html')">
+    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('音乐／转盘.html')">
       <div class="parallax-wrap">
-        <img src="g.webp" alt="工具6配图" class="w-full h-48 object-cover rounded-t-2xl">
+        <img src="音乐／g.webp" alt="工具6配图" class="w-full h-48 object-cover rounded-t-2xl">
       </div>
       <div class="p-5">
         <h3 class="font-semibold text-xl text-slate-900 dark:text-white">转盘</h3>
@@ -383,120 +383,120 @@ body{min-height:100vh;background:#fff8fb;overflow-x:hidden}
     </div>
     <!-- 工具15 -->
     <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool15.html')">
-      <div class="parallax-wrap">
-        <img src="img/tool15.png" alt="工具15配图" class="w-full h-48 object-cover rounded-t-2xl">
+      <div 班级="parallax-wrap">
+        <img src="img/tool15.png" 中高音="工具15配图" 班级="w-full h-48 object-cover rounded-t-2xl">
       </div>
-      <div class="p-5">
-        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十五名称</h3>
+      <div 班级="p-5">
+        <h3 班级="font-semibold text-xl text-slate-900 dark:text-white">工具十五名称</h3>
       </div>
     </div>
     <!-- 工具16 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool16.html')">
-      <div class="parallax-wrap">
-        <img src="img/tool16.png" alt="工具16配图" class="w-full h-48 object-cover rounded-t-2xl">
+    <div 班级="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" 点击="openFile('tool16.html')">
+      <div 班级="parallax-wrap">
+        <img src="img/tool16.png" 中高音="工具16配图" 班级="w-full h-48 object-cover rounded-t-2xl">
       </div>
-      <div class="p-5">
-        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十六名称</h3>
+      <div 班级="p-5">
+        <h3 班级="font-semibold text-xl text-slate-900 dark:text-white">工具十六名称</h3>
       </div>
     </div>
     <!-- 工具17 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool17.html')">
-      <div class="parallax-wrap">
-        <img src="img/tool17.png" alt="工具17配图" class="w-full h-48 object-cover rounded-t-2xl">
+    <div 班级="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" 点击="openFile('tool17.html')">
+      <div 班级="parallax-wrap">
+        <img src="img/tool17.png" 中高音="工具17配图" 班级="w-full h-48 object-cover rounded-t-2xl">
       </div>
-      <div class="p-5">
-        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十七名称</h3>
+      <div 班级="p-5">
+        <h3 班级="font-semibold text-xl text-slate-900 dark:text-white">工具十七名称</h3>
       </div>
     </div>
     <!-- 工具18 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool18.html')">
-      <div class="parallax-wrap">
-        <img src="img/tool18.png" alt="工具18配图" class="w-full h-48 object-cover rounded-t-2xl">
+    <div 班级="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" 点击="openFile('tool18.html')">
+      <div 班级="parallax-wrap">
+        <img src="img/tool18.png" 中高音="工具18配图" 班级="w-full h-48 object-cover rounded-t-2xl">
       </div>
-      <div class="p-5">
-        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十八名称</h3>
+      <div 班级="p-5">
+        <h3 班级="font-semibold text-xl text-slate-900 dark:text-white">工具十八名称</h3>
       </div>
     </div>
     <!-- 工具19 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool19.html')">
-      <div class="parallax-wrap">
-        <img src="img/tool19.png" alt="工具19配图" class="w-full h-48 object-cover rounded-t-2xl">
+    <div 班级="圆形-2XL玻璃卡樱花边卡悬停涟漪光标指针溢出隐藏" 点击="openFile('tool19.html')">
+      <div 班级="视差包裹">
+        <图片 src="img/tool19.png" 中高音="工具19配图" 班级="w-full h-48 物件盖 圆形T-2XL">
       </div>
-      <div class="p-5">
-        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具十九名称</h3>
+      <div 班级="p-5">
+        <h3 班级="font-semibold text-xl text-slate-900 dark:text-white">工具十九名称</h3>
       </div>
     </div>
     <!-- 工具20 -->
-    <div class="rounded-2xl glass-card sakura-border card-hover ripple cursor-pointer overflow-hidden" onclick="openFile('tool20.html')">
-      <div class="parallax-wrap">
-        <img src="img/tool20.png" alt="工具20配图" class="w-full h-48 object-cover rounded-t-2xl">
+    <div 班级="圆形-2XL玻璃卡樱花边卡悬停涟漪光标指针溢出隐藏" 点击="openFile('tool20.html')">
+      <div 班级="视差包裹">
+        <图片 src="img/tool20.png" 中高音="工具20配图" 班级="w-full h-48 物件盖 圆形T-2XL">
       </div>
-      <div class="p-5">
-        <h3 class="font-semibold text-xl text-slate-900 dark:text-white">工具二十名称</h3>
+      <div 班级="p-5">
+        <h3 班级="font-semibold text-xl text-slate-900 dark:text-white">工具二十名称</h3>
       </div>
     </div>
   </div>
   <!-- 底部 -->
-  <footer class="mt-24 text-center text-slate-500 dark:text-slate-400 py-6 border-t border-slate-800">
+  <页脚 班级=“mt-24 文本中心 文本石板-500 暗色：文本石板—400皮—6边框T边框石板—800”>
    作者未享福，持续更新ing
-  </footer>
+  </页脚>
 </div>
 <!-- 音频标签 -->
-<audio id="bgAudio">
-<script>
+<成音频率的 身份证件="bgAudio">
+<脚本>
 // ====================== 入场动画控制：访问过页面直接隐藏开场动画 ======================
-const introMask = document.querySelector('.intro-mask');
-if(localStorage.getItem('hasVisited')){
-  introMask.style.display = 'none';
-}else{
-  localStorage.setItem('hasVisited', '1');
+常量导入掩码=文档。查询选择器（“.导入掩码”）；
+如果（本地存储.get Item（已访问））{
+内置面具。风格。显示=“无”；
+}其他的{
+Local Storage.set项（'已访问'，'1'）；
 }
 
 // ====================== 自动随机播放音乐，修复播放报错BUG ======================
-const audio = document.getElementById('bgAudio');
-audio.volume = 0.6;
+常量成音频率的=文档。
+成音频率的.体积 = 0.6;
 // 歌曲列表
-const songData = [
-  {name:"红色高跟鞋",src:"1.mp3"},
-  {name:"晴天",src:"qing tian.mp3"},
-  {name:"花海",src:"hua hai.mp3"},
-  {name:"还是分开",src:"hai shi fen kai.mp3"},
-  {name:"我记得",src:"wo ji de.mp3"},
+常量送达塔=【
+{姓名：“红色高跟鞋”,src:“音乐／1.mp3”},
+{名称："晴天"，来源："音乐／qing tian.mp3"}
+{姓名：“花海”,src:音乐/花海mp3”},
+{姓名：“还是分开”,src:"音乐/还是芬凯.mp3”},
+{姓名：“我记得”,src:"音乐/我基德mp3”},
 ];
-let currentSongIndex = 0;
-let audioPlayed = false;
+让当前歌曲指数=0；
+让音频播放=假；
 
 // 切换歌曲
-function switchSong(idx){
-  currentSongIndex = idx;
-  audio.src = songData[idx].src;
+函数 switchSong（idx）{
+currentSongIndex = idx；
+audio.src = songData[idx].src；
   // 捕获播放报错，消除控制台BUG
   audio.play().then(()=>{
-    audioPlayed = true;
+音频播放=真实；
   }).catch(err=>{
-    console.log("浏览器自动播放限制，点击页面任意位置开启音乐");
+    console.log(“浏览器自动播放限制，点击页面任意位置开启音乐”);
   });
 }
 
 // 页面加载完成随机选歌
 window.addEventListener('load',()=>{
-  const randomIdx = Math.floor(Math.random() * songData.length);
+常量 randomIdx = Math.floor（Math.random（） * songData.length）；
   switchSong(randomIdx);
 });
 
 // 用户点击页面任意位置解锁播放（解决浏览器拦截BUG）
 document.body.addEventListener('click',()=>{
-  if(!audioPlayed){
-    audio.play().then(()=>audioPlayed=true).catch(e=>{});
-  }
-})
+如果（！音频播放）{
+audio.play（）.then（（）=>audioPlayed=true）.catch（e=>{}）；
+>
+div
 
-// 播放结束自动随机换一首（不重复当前）
-audio.addEventListener('ended',()=>{
-  let newIdx;
+</
+audio.addEventListener（'结束'，（）=>{'结束'，（）=>{
+let newIdx；
   do{
-    newIdx = Math.floor(Math.random() * songData.length);
-  }while(newIdx === currentSongIndex);
+newIdx = Math.floor（Math.random（） * songData.length）；
+}while（newIdx === currentSongIndex）；
   switchSong(newIdx);
 });
 
@@ -508,12 +508,12 @@ const openThoughtBtn2=document.getElementById('openThoughtBtn2');
 const closeModal=document.getElementById('closeModal');
 const toastBox=document.getElementById('toastBox');
 // 深色模式
-if (localStorage.getItem('dark') === '1' || (!localStorage.getItem('dark') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+如果 (localStorage.getItem('dark') === '1' || (!localStorage.getItem('dark') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
   document.documentElement.classList.add('dark');
 }
 darkToggle.onclick = () => {
   document.documentElement.classList.toggle('dark');
-  localStorage.setItem('dark', document.documentElement.classList.contains('dark') ? '1' : '0');
+localStorage.setItem（'dark'，document.documentElement.classList.contains（'dark'）？'1': '0'）；
 };
 // 作者感悟弹窗
 function openThought() {
@@ -652,1041 +652,3 @@ animateSakura();
 </script>
 </body>
 </html>            display: none;
-            max-width: 1200px;
-            margin: 0 auto; /* 居中布局，防止左右溢出 */
-        }
-        /* 板块随机淡入动画 */
-        @keyframes fade-in-from-top { 0% { opacity:0; transform:translateY(-50px); } 100% { opacity:1; transform:translateY(0); } }
-        @keyframes fade-in-from-bottom { 0% { opacity:0; transform:translateY(50px); } 100% { opacity:1; transform:translateY(0); } }
-        @keyframes fade-in-from-left { 0% { opacity:0; transform:translateX(-50px); } 100% { opacity:1; transform:translateX(0); } }
-        @keyframes fade-in-from-right { 0% { opacity:0; transform:translateX(50px); } 100% { opacity:1; transform:translateX(0); } }
-        /* 板块悬停：倾斜放大+灵动过渡 */
-        .class-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            min-height: 200px; /* 统一卡片高度，防止布局错乱 */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .class-card:hover {
-            transform: rotate(2deg) scale(1.05);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-        }
-        /* 音乐播放器 - 固定底部，布局规整 */
-        .music-player {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            border-top: 1px solid #eaeaea;
-            z-index: 30;
-            padding: 1rem 2rem;
-            box-sizing: border-box; /* 防止内边距溢出 */
-        }
-        .progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; cursor: pointer; width: 100%; }
-        .progress-fill { height: 100%; background: #4f46e5; border-radius: 3px; width: 0%; transition: width 0.1s linear; }
-        .volume-bar { height: 4px; background: #e0e0e0; border-radius: 2px; cursor: pointer; width: 100px; }
-        .volume-fill { height: 100%; background: #4f46e5; border-radius: 2px; width: 70%; transition: width 0.2s ease; }
-        /* 歌词弹屏：灵动效果 */
-        .lyric-popup {
-            position: fixed;
-            bottom: 120px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 40;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: lyric-fly 0.5s ease forwards, lyric-fade 3s ease 2.5s forwards;
-        }
-        @keyframes lyric-fly {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes lyric-fade {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); }
-        }
-        /* 模态框遮罩 */
-        .modal-mask {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(3px);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-container {
-            background: white;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 450px;
-            padding: 24px;
-            animation: modal-enter 0.3s ease forwards;
-            box-sizing: border-box; /* 防止内边距溢出 */
-        }
-        @keyframes modal-enter {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        /* 隐藏元素 */
-        .hidden-block { display: none !important; }
-        /* 文件列表样式 */
-        .file-item {
-            transition: all 0.3s ease;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .file-item:hover {
-            background: #f8fafc;
-        }
-        /* 表格样式规整 */
-        table {
-            width: 100%;
-            box-sizing: border-box;
-        }
-        td, th {
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-        }
-    </style>
-</head>
-<body>
-    <!-- 1. 制作人验证模块 -->
-    <div class="verify-container fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
-        <h2 class="text-3xl font-bold text-indigo-600 mb-8">班级群网站 - 制作人验证</h2>
-        <div class="flex items-center gap-4 w-full max-w-md px-4">
-            <input type="text" id="verifyInput" placeholder="请输入网页制作人姓名" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <button id="verifyBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">验证进入</button>
-        </div>
-        <p class="text-gray-500 mt-4 text-sm">提示：输入正确的制作人姓名即可解锁网站</p>
-    </div>
-
-    <!-- 2. 网站主内容（验证通过后显示） -->
-    <div class="page-container min-h-screen py-10 px-4 md:px-8">
-        <!-- 顶部账号栏 -->
-        <div class="flex flex-wrap justify-between items-center mb-8 bg-white/80 backdrop-blur(5px) p-4 rounded-xl">
-            <div class="mb-4 md:mb-0">
-                <h1 class="text-2xl font-bold text-indigo-700">我们的班级群</h1>
-                <p class="text-gray-500 text-sm">制作人：感悟 | 时光不老，我们不散</p>
-            </div>
-            <div class="flex flex-wrap gap-3">
-                <button id="guestLoginBtn" class="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors">游客登录</button>
-                <button id="loginBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">登录</button>
-                <button id="registerBtn" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors">注册</button>
-                <button id="logoutBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors hidden-block">退出登录</button>
-                <span id="userName" class="text-gray-800 font-medium hidden-block mt-2 md:mt-0"></span>
-            </div>
-        </div>
-
-        <!-- 开发者功能面板（仅感悟可见） -->
-        <div id="devPanel" class="mb-8 bg-purple-50 p-4 rounded-xl hidden-block">
-            <h3 class="text-xl font-bold text-purple-700 mb-3 flex items-center"><i class="fa-solid fa-code mr-2"></i>开发者面板（感悟专属）</h3>
-            <div class="flex flex-wrap gap-3 mb-4">
-                <button id="checkRegBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">审核注册账号</button>
-                <button id="checkFileBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">审核上传文件</button>
-                <button id="clearDataBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">重置所有数据</button>
-                <button id="backupDataBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">备份数据</button>
-                <button id="restoreDataBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">恢复数据</button>
-                <input type="file" id="restoreFileInput" accept=".json" class="hidden-block">
-            </div>
-            <p class="text-purple-600 text-sm"><i class="fa-solid fa-exclamation-circle mr-1"></i> 注：此处可审核所有注册申请和文件上传申请，审核通过后生效</p>
-        </div>
-
-        <!-- 班级功能板块（全可用） -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            <!-- 班级相册 -->
-            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="album">
-                <i class="fa-solid fa-images text-4xl text-indigo-600 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级相册</h3>
-                <p class="text-gray-500">记录我们的点点滴滴美好瞬间</p>
-            </div>
-            <!-- 班级公告 -->
-            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="notice">
-                <i class="fa-solid fa-bullhorn text-4xl text-indigo-600 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级公告</h3>
-                <p class="text-gray-500">及时获取班级最新通知和安排</p>
-            </div>
-            <!-- 同学通讯录 -->
-            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="contact">
-                <i class="fa-solid fa-address-book text-4xl text-indigo-600 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">同学通讯录</h3>
-                <p class="text-gray-500">珍藏每一位同学的联系方式</p>
-            </div>
-            <!-- 班级活动 -->
-            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="activity">
-                <i class="fa-solid fa-calendar-check text-4xl text-indigo-600 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级活动</h3>
-                <p class="text-gray-500">回顾过往活动，预约未来相聚</p>
-            </div>
-            <!-- 学习资料分享 -->
-            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="file">
-                <i class="fa-solid fa-book-open text-4xl text-indigo-600 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">学习资料</h3>
-                <p class="text-gray-500">互帮互助，共享优质学习资源</p>
-            </div>
-            <!-- 班级留言板 -->
-            <div class="class-card bg-white rounded-xl p-6 text-center" data-target="message">
-                <i class="fa-solid fa-comment-dots text-4xl text-indigo-600 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">班级留言板</h3>
-                <p class="text-gray-500">留下想对同学说的心里话</p>
-            </div>
-        </div>
-
-        <!-- 板块内容容器（默认隐藏） -->
-        <div id="contentContainer" class="bg-white rounded-xl p-6 hidden-block mb-8">
-            <div id="albumPage" class="content-page hidden-block">
-                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级相册</h2>
-                <p class="text-gray-500 mb-4">点击下方上传相册图片（需登录，审核后展示）</p>
-                <button id="uploadAlbumBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors mb-4">上传相册图片</button>
-                <div id="albumList" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="text-gray-400 text-center py-8 col-span-full">暂无审核通过的相册图片</div>
-                </div>
-            </div>
-
-            <div id="noticePage" class="content-page hidden-block">
-                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级公告</h2>
-                <div class="p-4 bg-indigo-50 rounded-lg mb-4">
-                    <h3 class="font-semibold text-indigo-800">最新公告</h3>
-                    <p class="text-gray-600 mt-2">本班级群网站正式上线，支持文件分享、相册上传、留言互动等功能，所有上传内容需经制作人审核后展示~</p>
-                    <p class="text-gray-400 text-sm mt-2">发布时间：2026-01-27</p>
-                </div>
-                <p class="text-gray-500">开发者可发布新公告（专属功能）</p>
-            </div>
-
-            <div id="contactPage" class="content-page hidden-block">
-                <h2 class="text-2xl font-bold text-indigo-700 mb-4">同学通讯录</h2>
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-indigo-50">
-                            <th class="border border-gray-200 p-2 text-left">姓名</th>
-                            <th class="border border-gray-200 p-2 text-left">手机号</th>
-                            <th class="border border-gray-200 p-2 text-left">QQ/微信</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="border border-gray-200 p-2">感悟</td>
-                            <td class="border border-gray-200 p-2">开发者专属</td>
-                            <td class="border border-gray-200 p-2">开发者专属</td>
-                        </tr>
-                        <tr class="bg-gray-50">
-                            <td class="border border-gray-200 p-2">同学A</td>
-                            <td class="border border-gray-200 p-2">138****1234</td>
-                            <td class="border border-gray-200 p-2">123456789</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p class="text-gray-500 mt-4">可在留言板提交自己的联系方式，审核后添加至通讯录</p>
-            </div>
-
-            <div id="activityPage" class="content-page hidden-block">
-                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级活动</h2>
-                <div class="p-4 bg-gray-50 rounded-lg mb-3">
-                    <h3 class="font-semibold text-gray-800">2026年班级聚会</h3>
-                    <p class="text-gray-600 mt-1">时间：待定 | 地点：待定</p>
-                    <p class="text-gray-500 text-sm mt-1">报名方式：在留言板留言报名</p>
-                </div>
-                <p class="text-gray-500">暂无过往活动记录，期待大家的相聚~</p>
-            </div>
-
-            <div id="filePage" class="content-page hidden-block">
-                <h2 class="text-2xl font-bold text-indigo-700 mb-4">学习资料分享</h2>
-                <p class="text-gray-500 mb-4">点击下方上传学习资料（需登录，审核后展示，支持多种格式）</p>
-                <button id="uploadFileBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors mb-4">上传学习资料</button>
-                <div id="fileList" class="space-y-3">
-                    <div class="text-gray-400 text-center py-8">暂无审核通过的学习资料</div>
-                </div>
-            </div>
-
-            <div id="messagePage" class="content-page hidden-block">
-                <h2 class="text-2xl font-bold text-indigo-700 mb-4">班级留言板</h2>
-                <div class="mb-4">
-                    <textarea id="messageInput" rows="3" placeholder="写下你想对同学说的话（需登录）" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
-                    <button id="sendMessageBtn" class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">发送留言</button>
-                </div>
-                <div id="messageList" class="space-y-3">
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between">
-                            <span class="font-medium">感悟</span>
-                            <span class="text-gray-400 text-sm">2026-01-27</span>
-                        </div>
-                        <p class="text-gray-600 mt-1">欢迎大家使用班级群网站，有问题可以在这里留言~</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. 音乐播放器（适配GitHub仓库+布局规整） -->
-    <div class="music-player">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-music text-2xl text-indigo-600"></i>
-                <div>
-                    <h4 id="currentSongTitle" class="font-semibold text-gray-800">稻香</h4>
-                    <p id="currentSongSinger" class="text-xs text-gray-500">周杰伦</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-5">
-                <button id="prevSong" class="text-gray-700 hover:text-indigo-600 transition-colors">
-                    <i class="fa-solid fa-step-backward text-xl"></i>
-                </button>
-                <button id="playPause" class="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors">
-                    <i class="fa-solid fa-play" id="playPauseIcon"></i>
-                </button>
-                <button id="nextSong" class="text-gray-700 hover:text-indigo-600 transition-colors">
-                    <i class="fa-solid fa-step-forward text-xl"></i>
-                </button>
-            </div>
-            <div class="w-full md:w-64 flex flex-col gap-1">
-                <div class="progress-bar relative" id="progressBar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div class="flex justify-between text-xs text-gray-500">
-                    <span id="currentTime">00:00</span>
-                    <span id="totalTime">03:45</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-volume-up text-gray-700" id="volumeIcon"></i>
-                <div class="volume-bar relative" id="volumeBar">
-                    <div class="volume-fill" id="volumeFill"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. 模态框（登录/注册/审核/上传） -->
-    <div id="loginModal" class="modal-mask hidden-block">
-        <div class="modal-container">
-            <h3 class="text-xl font-bold text-indigo-700 mb-4">账号登录</h3>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-gray-700 text-sm mb-1">用户名</label>
-                    <input type="text" id="loginName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-gray-700 text-sm mb-1">密码</label>
-                    <input type="password" id="loginPwd" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <button id="doLoginBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">登录</button>
-                <button id="closeLoginModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="registerModal" class="modal-mask hidden-block">
-        <div class="modal-container">
-            <h3 class="text-xl font-bold text-indigo-700 mb-4">账号注册</h3>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-gray-700 text-sm mb-1">用户名</label>
-                    <input type="text" id="regName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-gray-700 text-sm mb-1">密码</label>
-                    <input type="password" id="regPwd" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-gray-700 text-sm mb-1">确认密码</label>
-                    <input type="password" id="regPwd2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <p class="text-gray-500 text-sm"><i class="fa-solid fa-info-circle mr-1"></i> 注册后需经感悟审核通过方可登录</p>
-                <button id="doRegisterBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">提交注册</button>
-                <button id="closeRegisterModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="checkRegModal" class="modal-mask hidden-block">
-        <div class="modal-container max-h-[80vh] overflow-y-auto">
-            <h3 class="text-xl font-bold text-purple-700 mb-4">审核注册申请</h3>
-            <div id="regCheckList" class="space-y-3 mb-4">
-                <div class="text-gray-400">暂无待审核的注册申请</div>
-            </div>
-            <button id="closeCheckRegModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">关闭</button>
-        </div>
-    </div>
-
-    <div id="checkFileModal" class="modal-mask hidden-block">
-        <div class="modal-container max-h-[80vh] overflow-y-auto">
-            <h3 class="text-xl font-bold text-purple-700 mb-4">审核文件上传申请</h3>
-            <div id="fileCheckList" class="space-y-3 mb-4">
-                <div class="text-gray-400">暂无待审核的文件上传申请</div>
-            </div>
-            <button id="closeCheckFileModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">关闭</button>
-        </div>
-    </div>
-
-    <div id="uploadFileModal" class="modal-mask hidden-block">
-        <div class="modal-container">
-            <h3 class="text-xl font-bold text-indigo-700 mb-4">上传文件</h3>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-gray-700 text-sm mb-1">文件名称</label>
-                    <input type="text" id="uploadFileName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入文件名称">
-                </div>
-                <div>
-                    <label class="block text-gray-700 text-sm mb-1">选择文件</label>
-                    <input type="file" id="uploadFileInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" accept="*">
-                </div>
-                <p class="text-gray-500 text-sm"><i class="fa-solid fa-info-circle mr-1"></i> 上传后需经审核通过方可展示</p>
-                <button id="doUploadFileBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">提交上传</button>
-                <button id="closeUploadFileModal" class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 全局变量
-        let currentUser = { isLogin: false, name: '', isDev: false };
-        let currentSongIndex = 0;
-        let audio = new Audio();
-        let isPlaying = false;
-        
-        // ================= 关键更新：GitHub仓库配置 =================
-        const GITHUB_MUSIC_BASE_URL = 'https://raw.githubusercontent.com/ganwu999/ganwu999.github.io/main/music/';
-        
-        // 初始化本地存储（更新开发者账号：感悟 / 20111221）
-        const initLocalStorage = () => {
-            const keys = ['classUserList', 'classRegApply', 'classFileList', 'classFileApply', 'classAlbumList', 'classMessageList'];
-            keys.forEach(key => {
-                if (!localStorage.getItem(key)) {
-                    localStorage.setItem(key, key === 'classMessageList' ? JSON.stringify([{name:'感悟',content:'欢迎大家使用班级群网站，有问题可以在这里留言~',time:'2026-01-27'}]) : '[]');
-                }
-            });
-            // 初始化开发者账号（强制更新，确保旧数据被覆盖）
-            let userList = JSON.parse(localStorage.getItem('classUserList'));
-            // 先移除旧的「张诺策」账号（如果存在）
-            userList = userList.filter(item => item.name !== '张诺策');
-            // 移除旧的「感悟」账号（如果存在，保证密码最新）
-            userList = userList.filter(item => item.name !== '感悟');
-            // 添加新的开发者账号
-            userList.push({ name: '感悟', pwd: '20111221', time: new Date().toLocaleDateString() });
-            localStorage.setItem('classUserList', JSON.stringify(userList));
-        };
-        initLocalStorage();
-
-        // 歌曲列表
-        const songList = [
-            { 
-                title: '稻香', 
-                singer: '周杰伦', 
-                url: `${GITHUB_MUSIC_BASE_URL}dao xiang.mp3`, 
-                lyric: [[0,'对这个世界如果你有太多的抱怨'],[3,'跌倒了就不敢继续往前走'],[6,'为什么人要这么的脆弱 堕落'],[9,'请你打开电视看看'],[12,'多少人为生命在努力勇敢的走下去'],[15,'我们是不是该知足'],[18,'珍惜一切 就算没有拥有'],[22,'还记得你说家是唯一的城堡'],[26,'随着稻香河流继续奔跑'],[29,'微微笑 小时候的梦我知道'],[33,'不要哭让萤火虫带着你逃跑'],[36,'乡间的歌谣永远的依靠'],[40,'回家吧 回到最初的美好']] 
-            },
-            { 
-                title: '晴天', 
-                singer: '周杰伦', 
-                url: `${GITHUB_MUSIC_BASE_URL}qing tian.mp3`, 
-                lyric: [[0,'故事的小黄花 从出生那年就飘着'],[4,'童年的荡秋千 随记忆一直晃到现在'],[8,'rui sou sou xi dou xi la'],[11,'sou la xi xi xi xi la xi la sou'],[15,'吹着前奏望着天空 我想起花瓣试着掉落']] 
-            },
-            { 
-                title: '红色高跟鞋', 
-                singer: '蔡健雅', 
-                url: `${GITHUB_MUSIC_BASE_URL}hong se gao gen xie.mp3`, 
-                lyric: [[0,'该怎么去形容你最贴切'],[4,'拿什么跟你作比较才算特别'],[8,'对你的感觉 强烈'],[11,'却又不太了解 只凭直觉']] 
-            }
-        ];
-
-        // 1. 制作人验证
-        const verifyInput = document.getElementById('verifyInput');
-        const verifyBtn = document.getElementById('verifyBtn');
-        const verifyContainer = document.querySelector('.verify-container');
-        const pageContainer = document.querySelector('.page-container');
-        verifyBtn.addEventListener('click', () => {
-            if (verifyInput.value.trim() === '感悟') {
-                verifyContainer.classList.add('verify-hidden');
-                setTimeout(() => {
-                    pageContainer.style.display = 'block';
-                    initCardAnimations();
-                }, 600);
-            } else {
-                alert('姓名输入错误，请重新输入！');
-                verifyInput.value = '';
-                verifyInput.focus();
-            }
-        });
-        verifyInput.addEventListener('keydown', (e) => e.key === 'Enter' && verifyBtn.click());
-
-        // 板块入场动画
-        function initCardAnimations() {
-            const cards = document.querySelectorAll('.class-card');
-            const title = document.querySelector('.page-container > div:first-child');
-            const animations = ['fade-in-from-top','fade-in-from-bottom','fade-in-from-left','fade-in-from-right'];
-            title.style.animation = `${animations[0]} 0.8s ease-out forwards`;
-            title.style.opacity = '0';
-            cards.forEach((card, index) => {
-                const randomAni = animations[Math.floor(Math.random() * 4)];
-                card.style.animation = `${randomAni} 0.8s ease-out forwards`;
-                card.style.opacity = '0';
-                card.style.animationDelay = `${index * 0.15}s`;
-            });
-        }
-
-        // 2. 板块功能绑定
-        const classCards = document.querySelectorAll('.class-card');
-        const contentContainer = document.getElementById('contentContainer');
-        const contentPages = document.querySelectorAll('.content-page');
-        classCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const target = card.dataset.target;
-                contentContainer.classList.remove('hidden-block');
-                contentPages.forEach(page => page.classList.add('hidden-block'));
-                document.getElementById(`${target}Page`).classList.remove('hidden-block');
-                contentContainer.scrollIntoView({ behavior: 'smooth' });
-                target === 'file' && renderFileList();
-                target === 'message' && renderMessageList();
-                target === 'album' && renderAlbumList();
-            });
-        });
-
-        // 3. 数据渲染函数实现
-        function renderFileList() {
-            const fileList = document.getElementById('fileList');
-            const files = JSON.parse(localStorage.getItem('classFileList'));
-            
-            if (files.length === 0) {
-                fileList.innerHTML = '<div class="text-gray-400 text-center py-8">暂无审核通过的学习资料</div>';
-                return;
-            }
-            
-            fileList.innerHTML = files.map(file => `
-                <div class="file-item p-3 border rounded-lg flex justify-between items-center">
-                    <div>
-                        <div class="font-medium">${file.name}</div>
-                        <div class="text-xs text-gray-500">上传者：${file.uploader} | 上传时间：${file.time}</div>
-                    </div>
-                    <button class="text-indigo-600 hover:text-indigo-800" onclick="downloadFile('${file.name}')">
-                        <i class="fa-solid fa-download"></i> 下载
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        function renderAlbumList() {
-            const albumList = document.getElementById('albumList');
-            const albums = JSON.parse(localStorage.getItem('classAlbumList'));
-            
-            if (albums.length === 0) {
-                albumList.innerHTML = '<div class="text-gray-400 text-center py-8 col-span-full">暂无审核通过的相册图片</div>';
-                return;
-            }
-            
-            albumList.innerHTML = albums.map(album => `
-                <div class="rounded-lg overflow-hidden shadow-md">
-                    <img src="${album.url}" alt="${album.name}" class="w-full h-48 object-cover">
-                    <div class="p-2 text-center text-sm">${album.name}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderMessageList() {
-            const messageList = document.getElementById('messageList');
-            const messages = JSON.parse(localStorage.getItem('classMessageList'));
-            
-            messageList.innerHTML = messages.map(msg => `
-                <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="flex justify-between">
-                        <span class="font-medium">${msg.name}</span>
-                        <span class="text-gray-400 text-sm">${msg.time}</span>
-                    </div>
-                    <p class="text-gray-600 mt-1">${msg.content}</p>
-                </div>
-            `).join('');
-        }
-
-        // 4. 账号系统（适配新账号 感悟/20111221）
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
-        const guestLoginBtn = document.getElementById('guestLoginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const userName = document.getElementById('userName');
-        const devPanel = document.getElementById('devPanel');
-        const loginModal = document.getElementById('loginModal');
-        const registerModal = document.getElementById('registerModal');
-        const closeLoginModal = document.getElementById('closeLoginModal');
-        const closeRegisterModal = document.getElementById('closeRegisterModal');
-        const doLoginBtn = document.getElementById('doLoginBtn');
-        const doRegisterBtn = document.getElementById('doRegisterBtn');
-        const loginName = document.getElementById('loginName');
-        const loginPwd = document.getElementById('loginPwd');
-        const regName = document.getElementById('regName');
-        const regPwd = document.getElementById('regPwd');
-        const regPwd2 = document.getElementById('regPwd2');
-
-        const openModal = (modal) => modal.classList.remove('hidden-block');
-        const closeModal = (modal) => {
-            modal.classList.add('hidden-block');
-            modal.querySelectorAll('input').forEach(input => input.value = '');
-        };
-
-        loginBtn.addEventListener('click', () => openModal(loginModal));
-        registerBtn.addEventListener('click', () => openModal(registerModal));
-        closeLoginModal.addEventListener('click', () => closeModal(loginModal));
-        closeRegisterModal.addEventListener('click', () => closeModal(registerModal));
-        document.querySelectorAll('.modal-mask').forEach(mask => {
-            mask.addEventListener('click', (e) => e.target === mask && closeModal(mask));
-        });
-
-        // 游客登录
-        guestLoginBtn.addEventListener('click', () => {
-            currentUser = { isLogin: true, name: '游客', isDev: false };
-            updateUserUI();
-            alert('游客登录成功，仅可浏览，不可上传/留言/注册');
-        });
-
-        // 退出登录
-        logoutBtn.addEventListener('click', () => {
-            currentUser = { isLogin: false, name: '', isDev: false };
-            updateUserUI();
-            alert('退出登录成功');
-        });
-
-        // 注册功能
-        doRegisterBtn.addEventListener('click', () => {
-            const name = regName.value.trim();
-            const pwd = regPwd.value;
-            const pwd2 = regPwd2.value;
-            if (!name || !pwd || !pwd2) return alert('请填写完整信息！');
-            if (pwd !== pwd2) return alert('两次密码输入不一致！');
-            if (name === '感悟') return alert('该用户名不可注册！');
-            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
-            const userList = JSON.parse(localStorage.getItem('classUserList'));
-            if (regApply.some(item => item.name === name) || userList.some(item => item.name === name)) {
-                return alert('该用户名已申请注册/已注册！');
-            }
-            regApply.push({ name, pwd, time: new Date().toLocaleDateString() });
-            localStorage.setItem('classRegApply', JSON.stringify(regApply));
-            closeModal(registerModal);
-            alert('注册申请提交成功，需经感悟审核通过后方可登录！');
-        });
-
-        // 登录功能（适配新账号 感悟/20111221）
-        doLoginBtn.addEventListener('click', () => {
-            const name = loginName.value.trim();
-            const pwd = loginPwd.value;
-            if (!name || !pwd) return alert('请填写完整信息！');
-            const userList = JSON.parse(localStorage.getItem('classUserList'));
-            const user = userList.find(item => item.name === name && item.pwd === pwd);
-            if (!user) return alert('用户名或密码错误！');
-            const isDev = name === '感悟';
-            currentUser = { isLogin: true, name, isDev };
-            updateUserUI();
-            closeModal(loginModal);
-            alert(`欢迎${isDev ? '开发者：' : ''}${name}登录！`);
-        });
-
-        // 更新用户UI
-        function updateUserUI() {
-            if (currentUser.isLogin) {
-                loginBtn.classList.add('hidden-block');
-                registerBtn.classList.add('hidden-block');
-                guestLoginBtn.classList.add('hidden-block');
-                logoutBtn.classList.remove('hidden-block');
-                userName.classList.remove('hidden-block');
-                userName.textContent = `当前登录：${currentUser.name}`;
-                devPanel.classList.toggle('hidden-block', !currentUser.isDev);
-            } else {
-                loginBtn.classList.remove('hidden-block');
-                registerBtn.classList.remove('hidden-block');
-                guestLoginBtn.classList.remove('hidden-block');
-                logoutBtn.classList.add('hidden-block');
-                userName.classList.add('hidden-block');
-                devPanel.classList.add('hidden-block');
-            }
-        }
-
-        // 5. 开发者功能实现
-        const checkRegBtn = document.getElementById('checkRegBtn');
-        const checkFileBtn = document.getElementById('checkFileBtn');
-        const clearDataBtn = document.getElementById('clearDataBtn');
-        const backupDataBtn = document.getElementById('backupDataBtn');
-        const restoreDataBtn = document.getElementById('restoreDataBtn');
-        const restoreFileInput = document.getElementById('restoreFileInput');
-        const checkRegModal = document.getElementById('checkRegModal');
-        const checkFileModal = document.getElementById('checkFileModal');
-        const closeCheckRegModal = document.getElementById('closeCheckRegModal');
-        const closeCheckFileModal = document.getElementById('closeCheckFileModal');
-        const regCheckList = document.getElementById('regCheckList');
-        const fileCheckList = document.getElementById('fileCheckList');
-
-        // 审核注册申请
-        checkRegBtn.addEventListener('click', () => {
-            openModal(checkRegModal);
-            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
-            
-            if (regApply.length === 0) {
-                regCheckList.innerHTML = '<div class="text-gray-400">暂无待审核的注册申请</div>';
-                return;
-            }
-            
-            regCheckList.innerHTML = regApply.map((item, index) => `
-                <div class="p-3 border rounded-lg flex justify-between items-center">
-                    <div>
-                        <div class="font-medium">${item.name}</div>
-                        <div class="text-xs text-gray-500">申请时间：${item.time}</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="px-2 py-1 bg-green-600 text-white rounded" onclick="approveReg(${index})">通过</button>
-                        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="rejectReg(${index})">拒绝</button>
-                    </div>
-                </div>
-            `).join('');
-        });
-
-        // 审核文件申请
-        checkFileBtn.addEventListener('click', () => {
-            openModal(checkFileModal);
-            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
-            
-            if (fileApply.length === 0) {
-                fileCheckList.innerHTML = '<div class="text-gray-400">暂无待审核的文件上传申请</div>';
-                return;
-            }
-            
-            fileCheckList.innerHTML = fileApply.map((item, index) => `
-                <div class="p-3 border rounded-lg flex justify-between items-center">
-                    <div>
-                        <div class="font-medium">${item.name}</div>
-                        <div class="text-xs text-gray-500">上传者：${item.uploader} | 上传时间：${item.time}</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="px-2 py-1 bg-green-600 text-white rounded" onclick="approveFile(${index})">通过</button>
-                        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="rejectFile(${index})">拒绝</button>
-                    </div>
-                </div>
-            `).join('');
-        });
-
-        // 注册审核通过
-        window.approveReg = function(index) {
-            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
-            const userList = JSON.parse(localStorage.getItem('classUserList'));
-            userList.push(regApply[index]);
-            regApply.splice(index, 1);
-            localStorage.setItem('classRegApply', JSON.stringify(regApply));
-            localStorage.setItem('classUserList', JSON.stringify(userList));
-            alert('审核通过！');
-            checkRegBtn.click();
-        };
-
-        // 注册审核拒绝
-        window.rejectReg = function(index) {
-            const regApply = JSON.parse(localStorage.getItem('classRegApply'));
-            regApply.splice(index, 1);
-            localStorage.setItem('classRegApply', JSON.stringify(regApply));
-            alert('审核拒绝！');
-            checkRegBtn.click();
-        };
-
-        // 文件审核通过
-        window.approveFile = function(index) {
-            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
-            const fileList = JSON.parse(localStorage.getItem('classFileList'));
-            fileList.push(fileApply[index]);
-            fileApply.splice(index, 1);
-            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
-            localStorage.setItem('classFileList', JSON.stringify(fileList));
-            alert('审核通过！');
-            checkFileBtn.click();
-        };
-
-        // 文件审核拒绝
-        window.rejectFile = function(index) {
-            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
-            fileApply.splice(index, 1);
-            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
-            alert('审核拒绝！');
-            checkFileBtn.click();
-        };
-
-        // 关闭审核模态框
-        closeCheckRegModal.addEventListener('click', () => closeModal(checkRegModal));
-        closeCheckFileModal.addEventListener('click', () => closeModal(checkFileModal));
-
-        // 重置所有数据
-        clearDataBtn.addEventListener('click', () => {
-            if (!confirm('确定要重置所有数据吗？此操作不可恢复！')) return;
-            localStorage.clear();
-            initLocalStorage();
-            alert('数据已重置！');
-            location.reload();
-        });
-
-        // 备份数据
-        backupDataBtn.addEventListener('click', () => {
-            const backupData = {
-                userList: JSON.parse(localStorage.getItem('classUserList')),
-                regApply: JSON.parse(localStorage.getItem('classRegApply')),
-                fileList: JSON.parse(localStorage.getItem('classFileList')),
-                fileApply: JSON.parse(localStorage.getItem('classFileApply')),
-                albumList: JSON.parse(localStorage.getItem('classAlbumList')),
-                messageList: JSON.parse(localStorage.getItem('classMessageList'))
-            };
-            
-            const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `班级群数据备份_${new Date().toLocaleDateString()}.json`;
-            a.click();
-            URL.revokeObjectURL(a.href);
-            alert('数据备份成功！');
-        });
-
-        // 恢复数据
-        restoreDataBtn.addEventListener('click', () => {
-            restoreFileInput.click();
-        });
-
-        restoreFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    localStorage.setItem('classUserList', JSON.stringify(data.userList || []));
-                    localStorage.setItem('classRegApply', JSON.stringify(data.regApply || []));
-                    localStorage.setItem('classFileList', JSON.stringify(data.fileList || []));
-                    localStorage.setItem('classFileApply', JSON.stringify(data.fileApply || []));
-                    localStorage.setItem('classAlbumList', JSON.stringify(data.albumList || []));
-                    localStorage.setItem('classMessageList', JSON.stringify(data.messageList || []));
-                    alert('数据恢复成功！');
-                    location.reload();
-                } catch (err) {
-                    alert('数据格式错误，恢复失败！');
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        // 6. 文件上传功能实现
-        const uploadFileBtn = document.getElementById('uploadFileBtn');
-        const uploadFileModal = document.getElementById('uploadFileModal');
-        const closeUploadFileModal = document.getElementById('closeUploadFileModal');
-        const doUploadFileBtn = document.getElementById('doUploadFileBtn');
-        const uploadFileName = document.getElementById('uploadFileName');
-        const uploadFileInput = document.getElementById('uploadFileInput');
-
-        uploadFileBtn.addEventListener('click', () => {
-            if (!currentUser.isLogin) {
-                alert('请先登录！');
-                openModal(loginModal);
-                return;
-            }
-            openModal(uploadFileModal);
-        });
-
-        closeUploadFileModal.addEventListener('click', () => closeModal(uploadFileModal));
-
-        doUploadFileBtn.addEventListener('click', () => {
-            const fileName = uploadFileName.value.trim();
-            const file = uploadFileInput.files[0];
-            
-            if (!fileName) return alert('请输入文件名称！');
-            if (!file) return alert('请选择要上传的文件！');
-            
-            // 模拟文件上传（实际项目中需后端支持）
-            const fileApply = JSON.parse(localStorage.getItem('classFileApply'));
-            fileApply.push({
-                name: fileName,
-                uploader: currentUser.name,
-                time: new Date().toLocaleDateString(),
-                size: (file.size / 1024).toFixed(2) + 'KB',
-                type: file.type
-            });
-            
-            localStorage.setItem('classFileApply', JSON.stringify(fileApply));
-            closeModal(uploadFileModal);
-            alert('文件上传申请提交成功，需经审核通过后方可展示！');
-            uploadFileName.value = '';
-            uploadFileInput.value = '';
-        });
-
-        // 7. 留言功能实现
-        const sendMessageBtn = document.getElementById('sendMessageBtn');
-        const messageInput = document.getElementById('messageInput');
-
-        sendMessageBtn.addEventListener('click', () => {
-            if (!currentUser.isLogin) {
-                alert('请先登录！');
-                openModal(loginModal);
-                return;
-            }
-            
-            const content = messageInput.value.trim();
-            if (!content) return alert('请输入留言内容！');
-            
-            const messageList = JSON.parse(localStorage.getItem('classMessageList'));
-            messageList.push({
-                name: currentUser.name,
-                content,
-                time: new Date().toLocaleDateString()
-            });
-            
-            localStorage.setItem('classMessageList', JSON.stringify(messageList));
-            messageInput.value = '';
-            renderMessageList();
-            alert('留言发送成功！');
-        });
-
-        // 8. 音乐播放器功能实现
-        const playPause = document.getElementById('playPause');
-        const playPauseIcon = document.getElementById('playPauseIcon');
-        const prevSong = document.getElementById('prevSong');
-        const nextSong = document.getElementById('nextSong');
-        const progressBar = document.getElementById('progressBar');
-        const progressFill = document.getElementById('progressFill');
-        const currentTime = document.getElementById('currentTime');
-        const totalTime = document.getElementById('totalTime');
-        const volumeBar = document.getElementById('volumeBar');
-        const volumeFill = document.getElementById('volumeFill');
-        const volumeIcon = document.getElementById('volumeIcon');
-        const currentSongTitle = document.getElementById('currentSongTitle');
-        const currentSongSinger = document.getElementById('currentSongSinger');
-
-        // 初始化播放器
-        function initPlayer() {
-            loadSong(currentSongIndex);
-            audio.volume = 0.7;
-            
-            // 播放/暂停
-            playPause.addEventListener('click', togglePlay);
-            
-            // 上一曲/下一曲
-            prevSong.addEventListener('click', () => {
-                currentSongIndex = (currentSongIndex - 1 + songList.length) % songList.length;
-                loadSong(currentSongIndex);
-                if (isPlaying) audio.play();
-            });
-            
-            nextSong.addEventListener('click', () => {
-                currentSongIndex = (currentSongIndex + 1) % songList.length;
-                loadSong(currentSongIndex);
-                if (isPlaying) audio.play();
-            });
-            
-            // 进度条点击
-            progressBar.addEventListener('click', (e) => {
-                const progress = e.offsetX / progressBar.offsetWidth;
-                audio.currentTime = progress * audio.duration;
-            });
-            
-            // 音量调节
-            volumeBar.addEventListener('click', (e) => {
-                const volume = e.offsetX / volumeBar.offsetWidth;
-                audio.volume = volume;
-                volumeFill.style.width = `${volume * 100}%`;
-                updateVolumeIcon();
-            });
-            
-            // 音频事件监听
-            audio.addEventListener('timeupdate', updateProgress);
-            audio.addEventListener('loadedmetadata', updateTotalTime);
-            audio.addEventListener('ended', () => {
-                nextSong.click();
-            });
-            
-            // 歌词弹窗
-            audio.addEventListener('timeupdate', showLyric);
-        }
-
-        // 加载歌曲
-        function loadSong(index) {
-            const song = songList[index];
-            audio.src = song.url;
-            currentSongTitle.textContent = song.title;
-            currentSongSinger.textContent = song.singer;
-            progressFill.style.width = '0%';
-        }
-
-        // 播放/暂停切换
-        function togglePlay() {
-            if (isPlaying) {
-                audio.pause();
-                playPauseIcon.classList.remove('fa-pause');
-                playPauseIcon.classList.add('fa-play');
-            } else {
-                audio.play();
-                playPauseIcon.classList.remove('fa-play');
-                playPauseIcon.classList.add('fa-pause');
-            }
-            isPlaying = !isPlaying;
-        }
-
-        // 更新进度条
-        function updateProgress() {
-            const progress = (audio.currentTime / audio.duration) * 100;
-            progressFill.style.width = `${progress}%`;
-            
-            // 更新当前时间
-            const minutes = Math.floor(audio.currentTime / 60);
-            const seconds = Math.floor(audio.currentTime % 60);
-            currentTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        // 更新总时长
-        function updateTotalTime() {
-            const minutes = Math.floor(audio.duration / 60);
-            const seconds = Math.floor(audio.duration % 60);
-            totalTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        // 更新音量图标
-        function updateVolumeIcon() {
-            if (audio.volume === 0) {
-                volumeIcon.classList.remove('fa-volume-up', 'fa-volume-down');
-                volumeIcon.classList.add('fa-volume-mute');
-            } else if (audio.volume < 0.5) {
-                volumeIcon.classList.remove('fa-volume-up', 'fa-volume-mute');
-                volumeIcon.classList.add('fa-volume-down');
-            } else {
-                volumeIcon.classList.remove('fa-volume-down', 'fa-volume-mute');
-                volumeIcon.classList.add('fa-volume-up');
-            }
-        }
-
-        // 显示歌词弹窗
-        function showLyric() {
-            const song = songList[currentSongIndex];
-            const currentTime = Math.floor(audio.currentTime);
-            
-            for (let [time, lyric] of song.lyric) {
-                if (time === currentTime) {
-                    const lyricPopup = document.createElement('div');
-                    lyricPopup.className = 'lyric-popup bg-indigo-600 text-white';
-                    lyricPopup.textContent = lyric;
-                    lyricPopup.style.left = `${Math.random() * 80 + 10}%`;
-                    document.body.appendChild(lyricPopup);
-                    
-                    // 移除弹窗
-                    setTimeout(() => {
-                        document.body.removeChild(lyricPopup);
-                    }, 5500);
-                    break;
-                }
-            }
-        }
-
-        // 下载文件（模拟）
-        window.downloadFile = function(fileName) {
-            alert(`开始下载：${fileName}`);
-            // 实际项目中需后端支持文件下载
-        };
-
-        // 初始化播放器
-        initPlayer();
-    </script>
-</body>
-</html>
